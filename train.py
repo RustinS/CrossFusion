@@ -119,7 +119,7 @@ def train(datasets: tuple, fold_idx: int, opts: Namespace):
 
             val_c_index = validate_survival(model, val_loader, early_stopping, monitor_cindex, loss_fn, opts.save_dir)
 
-            if val_c_index > best_val_cindex and epoch > 2:
+            if val_c_index > best_val_cindex and epoch > 5:
                 best_val_epoch = epoch
                 best_val_cindex = val_c_index
                 print_log_message("New Best Val C-Index ...")

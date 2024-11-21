@@ -23,7 +23,7 @@ data_workers=12
 prefetch_factor=3
 grad_accum_steps=32
 preload=0
-num_folds=5
+num_folds=4
 test_ratio=0.2
 train_ratio=0.8
 valid_ratio=0
@@ -31,7 +31,7 @@ batch_size=1
 random_seed=7
 num_epochs=100
 continue_training=0
-es_patience=20
+es_patience=40
 
 learning_rate=3e-4
 weight_decay=4e-6

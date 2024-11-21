@@ -61,7 +61,7 @@ def get_training_args():
     parser.add_argument("--grad-accum-steps", type=int, help="Gradient accumulation steps.")
     parser.add_argument("--preload", type=int, help="Preload flag.")
     parser.add_argument("--num-folds", type=int, help="Number of folds for cross-validation.")
-    parser.add_argument("--splits-path", type=int, help="Directory for splits.")
+    parser.add_argument("--splits-path", type=str, help="Directory for splits.")
     parser.add_argument("--test-ratio", type=float, help="Ratio of test set.")
     parser.add_argument("--train-ratio", type=float, help="Ratio of train set.")
     parser.add_argument("--valid-ratio", type=float, help="Ratio of validation set.")

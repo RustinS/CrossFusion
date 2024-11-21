@@ -11,7 +11,8 @@ csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
 splits_path="./data/splits/4foldcv/tcga_luad"
 patches_path="/media/volume/Data/TCGA-LUAD/Patches"
 
-backbone="resnet50"
+# backbone="resnet50"
+backbone="hug_quilt"
 
 patch_size=512
 batch_size=256

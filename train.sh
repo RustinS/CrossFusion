@@ -4,10 +4,10 @@
 clinical_path="./data/tcga_luad_all_clean.csv.zip"
 csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
 splits_path="./data/splits/4foldcv/tcga_luad"
-img_dir="/media/volume/Data/TCGA_Data/Patches"
-pt_dir="/media/volume/Data/TCGA_pt"
+img_dir="/media/volume/Data/TCGA-LUAD/Patches"
+pt_dir="/media/volume/Data/TCGA-LUAD/Features"
 magnifications="5 10 20"
-save_dir="/media/volume/Code/Trained-Models/Quilt-CALG/Third-Attn"
+save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 
 # backbone="hug_quilt"
 # backbone_dim=768

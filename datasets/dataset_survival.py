@@ -166,19 +166,19 @@ class GenericWSISurvivalDataset(Dataset):
 
     def get_split_from_df(self, all_splits: dict, split_key: str = "train"):
         if split_key == "train":
-            train_split = all_splits["train_slide_ids"]
+            train_split = all_splits["train_slide_id"]
             train_split = train_split.dropna().reset_index(drop=True).to_list()
 
-            val_split = all_splits["val_slide_ids"]
+            val_split = all_splits["val_slide_id"]
             val_split = val_split.dropna().reset_index(drop=True).to_list()
 
-            train_split += val_split
+            split = train_split + val_split
         else:
-            split = all_splits[f"{split_key}_slide_ids"]
+            split = all_splits[f"{split_key}_slide_id"]
             split = split.dropna().reset_index(drop=True).to_list()
 
         if len(split) > 0:
-            mask = self.slide_data["slide_id"].isin(split)
+            mask = self.slide_data["image_file_name"].isin(split)
             df_slice = self.slide_data[mask].reset_index(drop=True)
             split = GenericSplit(
                 df_slice,
@@ -196,7 +196,7 @@ class GenericWSISurvivalDataset(Dataset):
     def return_splits(self, csv_path):
         all_splits = pd.read_csv(csv_path)
         train_split = self.get_split_from_df(all_splits=all_splits, split_key="train")
-        val_split = self.get_split_from_df(all_splits=all_splits, split_key="val")
+        val_split = self.get_split_from_df(all_splits=all_splits, split_key="test")
 
         train_slide_ids = train_split.slide_data["slide_id"].to_list()
         val_slide_ids = val_split.slide_data["slide_id"].to_list()

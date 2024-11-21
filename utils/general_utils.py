@@ -51,7 +51,8 @@ def set_random_seed(seed, device):
 def get_training_args():
     parser = argparse.ArgumentParser(description="Fine-tuning for survival prediction")
 
-    parser.add_argument("--csv-file-address", type=str, help="Address of CSV file.")
+    parser.add_argument("--csv-path", type=str, help="Address of CSV manifest file.")
+    parser.add_argument("--clinical-path", type=str, help="Address of clinical data.")
     parser.add_argument("--img-dir", type=str, help="Directory of images.")
     parser.add_argument("--save-dir", type=str, help="Directory to save results.")
     parser.add_argument("--model-name", type=str, help="Model name.")
@@ -60,6 +61,7 @@ def get_training_args():
     parser.add_argument("--grad-accum-steps", type=int, help="Gradient accumulation steps.")
     parser.add_argument("--preload", type=int, help="Preload flag.")
     parser.add_argument("--num-folds", type=int, help="Number of folds for cross-validation.")
+    parser.add_argument("--splits-path", type=int, help="Directory for splits.")
     parser.add_argument("--test-ratio", type=float, help="Ratio of test set.")
     parser.add_argument("--train-ratio", type=float, help="Ratio of train set.")
     parser.add_argument("--valid-ratio", type=float, help="Ratio of validation set.")

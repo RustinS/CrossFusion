@@ -15,7 +15,7 @@ class GenericWSISurvivalDataset(Dataset):
     def __init__(
         self,
         args,
-        csv_path="",
+        clinical_path="",
         shuffle=False,
         print_info=True,
         n_bins=4,
@@ -34,7 +34,7 @@ class GenericWSISurvivalDataset(Dataset):
         for mag_level in args.magnifications:
             self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"{mag_level}x")
 
-        slide_data = self.prep_slide_data(csv_path, args)
+        slide_data = self.prep_slide_data(clinical_path, args)
 
         assert label_col in slide_data.columns
         self.label_col = label_col
@@ -98,14 +98,16 @@ class GenericWSISurvivalDataset(Dataset):
         if print_info:
             self.summarize()
 
-    def prep_slide_data(self, csv_path, args):
-        info_csv_path = args.csv_file_address
+    def prep_slide_data(self, clinical_path, args):
+        info_csv_path = args.csv_path
 
         info_df = pd.read_csv(info_csv_path, sep="\t")
-        slide_data = pd.read_csv(csv_path, index_col=0, low_memory=False)
-        slide_data = slide_data.merge(info_df, left_on="case_id", right_on="Case ID", how="inner")
+        slide_data = pd.read_csv(clinical_path, index_col=0, low_memory=False)
+        # slide_data = slide_data.merge(info_df, left_on="case_id", right_on="Case ID", how="inner")
+        slide_data = slide_data.merge(info_df, left_on="slide_id", right_on="filename", how="inner")
 
-        slide_data["image_file_name"] = slide_data.apply(lambda row: f"{row['File Name'].split('.svs')[0]}", axis=1)
+        # slide_data["image_file_name"] = slide_data.apply(lambda row: f"{row['File Name'].split('.svs')[0]}", axis=1)
+        slide_data["image_file_name"] = slide_data.apply(lambda row: f"{row['filename'].split('.svs')[0]}", axis=1).to_numpy()
 
         present_names = []
         for _, row in slide_data.iterrows():
@@ -163,11 +165,20 @@ class GenericWSISurvivalDataset(Dataset):
         print_info_message(f"Slide-level counts: {self.slide_data['label'].value_counts(sort=False).to_dict()}")
 
     def get_split_from_df(self, all_splits: dict, split_key: str = "train"):
-        split = all_splits[split_key]
-        split = split.dropna().reset_index(drop=True)
+        if split_key == "train":
+            train_split = all_splits["train_slide_ids"]
+            train_split = train_split.dropna().reset_index(drop=True).to_list()
+
+            val_split = all_splits["val_slide_ids"]
+            val_split = val_split.dropna().reset_index(drop=True).to_list()
+
+            train_split += val_split
+        else:
+            split = all_splits[f"{split_key}_slide_ids"]
+            split = split.dropna().reset_index(drop=True).to_list()
 
         if len(split) > 0:
-            mask = self.slide_data["slide_id"].isin(split.tolist())
+            mask = self.slide_data["slide_id"].isin(split)
             df_slice = self.slide_data[mask].reset_index(drop=True)
             split = GenericSplit(
                 df_slice,

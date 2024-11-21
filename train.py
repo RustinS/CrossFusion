@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 from argparse import Namespace
 from pathlib import Path
@@ -328,7 +329,7 @@ if __name__ == "__main__":
 
     dataset = GenericMILSurvivalDataset(
         args=args,
-        csv_path="./data/tcga_brca_all_clean.csv.zip",
+        clinical_path=args.clinical_path,
         shuffle=False,
         print_info=True,
         patient_strat=False,
@@ -341,7 +342,7 @@ if __name__ == "__main__":
     for fold_idx in range(5):
         set_random_seed(args.random_seed, device)
         print("\n")
-        train_dataset, val_dataset = dataset.return_splits(f"./data/splits/tcga_brca/splits_{fold_idx}.csv")
+        train_dataset, val_dataset = dataset.return_splits(os.path.join(args.splits_path, f"fold{fold_idx}.csv"))
 
         datasets = (train_dataset, val_dataset)
 

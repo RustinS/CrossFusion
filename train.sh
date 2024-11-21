@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-csv_file_address="/media/volume/Data/TCGA_Data/Clinical/gdc_sample_sheet.tsv"
+# csv_file_address="/media/volume/Data/TCGA_Data/Clinical/gdc_sample_sheet.tsv"
+clinical_path="./data/tcga_luad_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+splits_path="./data/splits/4foldcv/tcga_luad"
 img_dir="/media/volume/Data/TCGA_Data/Patches"
 pt_dir="/media/volume/Data/TCGA_pt"
 magnifications="5 10 20"
@@ -41,7 +44,8 @@ num_heads=4
 num_attn_layers=1
 
 CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
-    --csv-file-address $csv_file_address \
+    --csv-path $csv_path \
+    --clinical-path $clinical_path \
     --img-dir $img_dir \
     --save-dir $save_dir \
     --model-name $model_name \
@@ -50,6 +54,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
     --grad-accum-steps $grad_accum_steps \
     --preload $preload \
     --num-folds $num_folds \
+    --splits-path $splits_path \
     --test-ratio $test_ratio \
     --train-ratio $train_ratio \
     --valid-ratio $valid_ratio \

@@ -14,7 +14,7 @@ output_dir="/media/volume/Data/TCGA-LUAD/Patches"
 
 num_workers=4
 batch_size=512
-thresh=1
+thresh=15
 batch_size=16
 
 python extract_patches.py \

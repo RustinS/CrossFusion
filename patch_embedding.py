@@ -186,7 +186,6 @@ def get_wsi_names(args, desired_levels):
     clinical_df = clinical_df.merge(info_df, left_on="slide_id", right_on="filename", how="inner")
 
     wsi_path_list = clinical_df.apply(lambda row: f"{args.wsi_path}/{row['id']}/{row['filename']}", axis=1).to_numpy()
-
     wsi_name_list = clinical_df.apply(lambda row: f"{row['filename'].split('.svs')[0]}", axis=1).to_numpy()
 
     split_data = pd.read_csv(os.path.join(args.splits_path, "fold0.csv"))
@@ -206,19 +205,21 @@ def get_wsi_names(args, desired_levels):
         if not Path(wsi_path_list[i]).is_file():
             missing_data.append(i)
 
-    wsi_path_list = np.delete(wsi_path_list, missing_data)
-    wsi_name_list = np.delete(wsi_name_list, missing_data)
-
     if len(missing_data) > 0:
         print_error_message(f"Number of missing data: {len(missing_data)}")
 
+    wsi_path_list = np.delete(wsi_path_list, missing_data)
+    wsi_name_list = np.delete(wsi_name_list, missing_data)
+
+    missing_data = []
     for mag_level in desired_levels:
         mag_dir = os.path.join(args.patches_path, f"{mag_level}x")
-        missing_data = []
         print_log_message(f"Checking for missing patches in level {mag_level}x:")
         for i, wsi_name in tqdm(enumerate(wsi_name_list)):
             if not os.path.exists(os.path.join(mag_dir, wsi_name)) and i not in missing_data:
-                missing_data.append(i)
+                print_log_message(f"Missing patches for {wsi_name} at {mag_level}x magnification level")
+                if i not in missing_data:
+                    missing_data.append(i)
 
     if len(missing_data) > 0:
         print_error_message(f"Number of missing data: {len(missing_data)}")

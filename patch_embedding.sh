@@ -6,10 +6,10 @@
 # clinical_path="/media/volume/Data/TCGA_Data/Clinical/tcga_brca_patch_gcn.csv"
 
 wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
-patches_path="/media/volume/Data/TCGA-LUAD/Patches"
-csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
 clinical_path="./data/tcga_luad_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
 splits_path="./data/splits/4foldcv/tcga_luad"
+patches_path="/media/volume/Data/TCGA-LUAD/Patches"
 
 backbone="resnet50"
 

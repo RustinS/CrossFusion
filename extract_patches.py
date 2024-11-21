@@ -172,13 +172,14 @@ def mask_rgb(rgb, mask):
 
 
 class WSIDataset(torch.utils.data.Dataset):
-    def __init__(self, patch_coords, wsi_data, patch_size, mag_level, threshold=15):
+    def __init__(self, patch_coords, wsi_data, patch_size, mag_level, threshold=15, power=-1):
         super(WSIDataset, self).__init__()
         self.patch_coords = patch_coords
         self.wsi_path, self.wsi_name = wsi_data
         self.patch_size = patch_size
         self.threshold = threshold
         self.mag_level = mag_level
+        self.power = power
 
         self.black_threshold = 5
         self.white_threshold = 250
@@ -191,7 +192,7 @@ class WSIDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         patch_coord = self.patch_coords[index]
 
-        wsi = WSIReader.open(input_img=self.wsi_path)
+        wsi = WSIReader.open(input_img=self.wsi_path) if self.power == -1 else WSIReader.open(input_img=self.wsi_path, power=self.power)
         patch = wsi.read_bounds(patch_coord, resolution=self.mag_level, units="power", coord_space="resolution")
         wsi.openslide_wsi.close()
 
@@ -342,8 +343,8 @@ def generate_extra_patches(args, min_patch_nums, wsi, mask, mag_level, patch_coo
     return patch_tensors_list
 
 
-def create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=0):
-    wsi_dataset = WSIDataset(patch_coords, wsi_data, args.patch_size, mag_level, args.thresh)
+def create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=0, power=-1):
+    wsi_dataset = WSIDataset(patch_coords, wsi_data, args.patch_size, mag_level, args.thresh, power)
 
     if num_workers > 0:
         return torch.utils.data.DataLoader(
@@ -421,9 +422,13 @@ if __name__ == "__main__":
         try:
             wsi = WSIReader.open(input_img=wsi_path)
             mask = wsi.tissue_mask(method="morphological", resolution=1.25, units="power")
+            power = -1
         except Exception as e:
             print_log_message(f"Error: {e}")
-            continue
+            print_log_message("Retrying with power 20.0 ...")
+            wsi = WSIReader.open(input_img=wsi_path, power=20.0)
+            mask = wsi.tissue_mask(method="morphological", resolution=1.25, units="power")
+            power = 20.0
 
         for mag_level in mag_levels:
             if mag_level not in desired_levels or not should_process:
@@ -437,7 +442,7 @@ if __name__ == "__main__":
 
             try:
                 fixed_patch_extractor = patchextraction.get_patch_extractor(
-                    input_img=wsi_path,
+                    input_img=wsi,
                     method_name="slidingwindow",
                     patch_size=(args.patch_size, args.patch_size),
                     stride=(args.patch_size, args.patch_size),
@@ -460,10 +465,10 @@ if __name__ == "__main__":
                 continue
 
             if len(patch_coords) > 6000:
-                data_loader = create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=0)
+                data_loader = create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=0, power=power)
             else:
                 data_loader = create_data_loader(
-                    WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, args.num_workers
+                    WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=args.num_workers, power=power
                 )
 
             # data_loader = create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords)
@@ -492,5 +497,4 @@ if __name__ == "__main__":
             print_log_message("Saving patches ...")
             save_patches(output_path, patch_tensors_list)
 
-            fixed_patch_extractor.wsi.openslide_wsi.close()
         del wsi, mask

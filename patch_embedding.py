@@ -185,19 +185,16 @@ def get_wsi_names(args, desired_levels):
     clinical_df = pd.read_csv(args.clinical_path)[["case_id", "censorship", "survival_months", "slide_id"]]
     clinical_df = clinical_df.merge(info_df, left_on="slide_id", right_on="filename", how="inner")
 
+    split_data = pd.read_csv(os.path.join(args.splits_path, "splits_0.csv"))
+    all_case_ids = (
+        split_data["train"].dropna().reset_index(drop=True).tolist() + split_data["val"].dropna().reset_index(drop=True).tolist()
+    )
+
+    mask = clinical_df["case_id"].isin(all_case_ids)
+    clinical_df = clinical_df[mask].reset_index(drop=True)
+
     wsi_path_list = clinical_df.apply(lambda row: f"{args.wsi_path}/{row['id']}/{row['filename']}", axis=1).to_numpy()
     wsi_name_list = clinical_df.apply(lambda row: f"{row['filename'].split('.svs')[0]}", axis=1).to_numpy()
-
-    split_data = pd.read_csv(os.path.join(args.splits_path, "fold0.csv"))
-    all_slide_ids = split_data['train_slide_id'].tolist() + split_data['val_slide_id'].tolist() + split_data['test_slide_id'].tolist()
-
-    drop_data = []
-    for i in tqdm(range(len(wsi_name_list))):
-        if wsi_name_list[i] not in all_slide_ids:
-            drop_data.append(i)
-
-    wsi_path_list = np.delete(wsi_path_list, drop_data)
-    wsi_name_list = np.delete(wsi_name_list, drop_data)
 
     missing_data = []
     print_log_message("Checking for missing WSI data:")
@@ -272,7 +269,7 @@ def get_opts(parser):
     group.add_argument("--patches_path", type=str, default="/media/volume/Data/TCGA/Patches", help="Path to Patches main dir")
     group.add_argument("-m", "--magnifications", type=int, nargs="+", default=(5, 10, 20), help="Levels for patch extraction [5]")
     group.add_argument("--csv_path", type=str, default="/media/volume/Data/TCGA/gdc_sample_sheet.tsv", help="Path to info CSV")
-    group.add_argument("--splits_path", type=str, default="./data/splits/4foldcv/tcga_brca", help="Path to splits CSV files")
+    group.add_argument("--splits_path", type=str, default="./data/splits/tcga_brca", help="Path to splits CSV files")
     group.add_argument(
         "--clinical_path", type=str, default="/media/volume/Data/TCGA_Data/Clinical/tcga_brca_patch_gcn.csv", help="Path to clinical CSV"
     )

@@ -3,7 +3,7 @@
 wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
 clinical_path="./data/tcga_luad_all_clean.csv.zip"
 csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/4foldcv/tcga_luad"
+splits_path="./data/splits/tcga_luad"
 dataset="TCGA"
 output_dir="/media/volume/Data/TCGA-LUAD/Patches"
 

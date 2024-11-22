@@ -165,18 +165,6 @@ class GenericWSISurvivalDataset(Dataset):
         print_info_message(f"Slide-level counts: {self.slide_data['label'].value_counts(sort=False).to_dict()}")
 
     def get_split_from_df(self, all_splits: dict, split_key: str = "train"):
-        # if split_key == "train":
-        #     train_split = all_splits["train_slide_id"]
-        #     train_split = train_split.dropna().reset_index(drop=True).to_list()
-
-        #     val_split = all_splits["val_slide_id"]
-        #     val_split = val_split.dropna().reset_index(drop=True).to_list()
-
-        #     split = train_split + val_split
-        # else:
-        #     split = all_splits[f"{split_key}_slide_id"]
-        #     split = split.dropna().reset_index(drop=True).to_list()
-
         split = all_splits[split_key]
         split = split.dropna().reset_index(drop=True).to_list()
 

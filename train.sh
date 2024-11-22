@@ -3,7 +3,7 @@
 # csv_file_address="/media/volume/Data/TCGA_Data/Clinical/gdc_sample_sheet.tsv"
 clinical_path="./data/tcga_luad_all_clean.csv.zip"
 csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/4foldcv/tcga_luad"
+splits_path="./data/splits/tcga_luad"
 img_dir="/media/volume/Data/TCGA-LUAD/Patches"
 pt_dir="/media/volume/Data/TCGA-LUAD/Features"
 magnifications="5 10 20"
@@ -23,10 +23,7 @@ data_workers=12
 prefetch_factor=3
 grad_accum_steps=32
 preload=0
-num_folds=4
-test_ratio=0.2
-train_ratio=0.8
-valid_ratio=0
+num_folds=5
 batch_size=1
 random_seed=7
 num_epochs=100
@@ -55,9 +52,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
     --preload $preload \
     --num-folds $num_folds \
     --splits-path $splits_path \
-    --test-ratio $test_ratio \
-    --train-ratio $train_ratio \
-    --valid-ratio $valid_ratio \
     --batch-size $batch_size \
     --random-seed $random_seed \
     --num-epochs $num_epochs \

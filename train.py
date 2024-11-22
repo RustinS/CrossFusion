@@ -339,10 +339,10 @@ if __name__ == "__main__":
 
     best_val_cindex_list = []
     best_val_epoch_list = []
-    for fold_idx in range(5):
+    for fold_idx in range(args.num_folds):
         set_random_seed(args.random_seed, device)
         print("\n")
-        train_dataset, val_dataset = dataset.return_splits(os.path.join(args.splits_path, f"fold{fold_idx}.csv"))
+        train_dataset, val_dataset = dataset.return_splits(os.path.join(args.splits_path, f"splits_{fold_idx}.csv"))
 
         datasets = (train_dataset, val_dataset)
 

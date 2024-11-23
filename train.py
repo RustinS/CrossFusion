@@ -349,10 +349,9 @@ if __name__ == "__main__":
         best_val_cindex, best_val_epoch = train(datasets, fold_idx, args)
         best_val_cindex_list.append(round(best_val_cindex, 3))
         best_val_epoch_list.append(best_val_epoch)
-        print_log_message(f"Current Best Val C-Index List: {best_val_cindex_list} - Current Best Val Epoch List: {best_val_epoch_list}")
+        print_log_message(f"Best Val C-Index List: {best_val_cindex_list} - Current Best Val Epoch List: {best_val_epoch_list}")
 
     best_val_cindex_list = np.array(best_val_cindex_list)
     mean_c_index = np.mean(best_val_cindex_list)
     std_c_index = np.std(best_val_cindex_list)
-    print_log_message(f"Best Val C-Index List: {best_val_cindex_list} - Best Val Epoch List: {best_val_epoch_list}")
     print_log_message(f"TCGA-{args.dataset_name} Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)

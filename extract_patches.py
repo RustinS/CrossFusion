@@ -49,6 +49,9 @@ class TCGADatasetPNG(torch.utils.data.Dataset):
             if not Path(wsi_path_list[i]).is_file():
                 missing_data.append(i)
 
+        if len(missing_data) > 0:
+            print_error_message("Missing data: {}".format([wsi_name_list[i] for i in missing_data]))
+
         self.wsi_path_list = np.delete(wsi_path_list, missing_data)
         self.wsi_name_list = np.delete(wsi_name_list, missing_data)
 

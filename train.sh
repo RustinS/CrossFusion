@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
-# csv_file_address="/media/volume/Data/TCGA_Data/Clinical/gdc_sample_sheet.tsv"
-clinical_path="./data/tcga_luad_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/tcga_luad"
-img_dir="/media/volume/Data/TCGA-LUAD/Patches"
-pt_dir="/media/volume/Data/TCGA-LUAD/Features"
-magnifications="5 10 20"
-save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
+# dataset_name=LUAD
+# clinical_path="./data/tcga_luad_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+# splits_path="./data/splits/tcga_luad"
+# img_dir="/media/volume/Data/TCGA-LUAD/Patches"
+# pt_dir="/media/volume/Data/TCGA-LUAD/Features"
+# save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
+
+dataset_name=UCEC
+clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+splits_path="./data/splits/tcga_ucec"
+img_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
+save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
 
 # backbone="hug_quilt"
 # backbone_dim=768
@@ -18,6 +25,7 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 backbone="resnet50"
 backbone_dim=2048
 
+magnifications="5 10 20"
 model_name="FirstAttn"
 data_workers=12
 prefetch_factor=3
@@ -68,4 +76,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
     --magnifications $magnifications \
     --lr-decay $lr_decay \
     --alpha-surv $alpha_surv \
-    --backbone-dim $backbone_dim
+    --backbone-dim $backbone_dim \
+    --dataset-name $dataset_name

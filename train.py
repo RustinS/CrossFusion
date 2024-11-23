@@ -167,8 +167,8 @@ def train_loop_survival(
             loss_value = loss.item()
 
             risk = -torch.sum(S, dim=1).detach().cpu().numpy()
-            all_risk_scores[batch_idx] = risk
-            all_censorships[batch_idx] = censorship.item()
+            all_risk_scores[batch_idx] = risk.item()
+            all_censorships[batch_idx] = censorship.cpu().numpy().item()
             all_event_times[batch_idx] = event_time
 
             train_loss += loss_value
@@ -236,8 +236,8 @@ def validate_survival(
         loss_value = loss.item()
 
         risk = -torch.sum(S, dim=1).cpu().numpy()
-        all_risk_scores[batch_idx] = risk
-        all_censorships[batch_idx] = censorship.cpu().numpy()
+        all_risk_scores[batch_idx] = risk.item()
+        all_censorships[batch_idx] = censorship.cpu().numpy().item()
         all_event_times[batch_idx] = event_time
 
         val_loss += loss_value
@@ -355,4 +355,4 @@ if __name__ == "__main__":
     mean_c_index = np.mean(best_val_cindex_list)
     std_c_index = np.std(best_val_cindex_list)
     print_log_message(f"Best Val C-Index List: {best_val_cindex_list} - Best Val Epoch List: {best_val_epoch_list}")
-    print_log_message(f"TCGA-BRCA Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)
+    print_log_message(f"TCGA-{args.dataset_name} Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)

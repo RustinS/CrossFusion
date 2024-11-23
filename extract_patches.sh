@@ -1,16 +1,32 @@
 #!/usr/bin/env bash
 
-wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
-clinical_path="./data/tcga_luad_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/tcga_luad"
-dataset="TCGA"
-output_dir="/media/volume/Data/TCGA-LUAD/Patches"
+# UCEC
+wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
+clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+splits_path="./data/splits/tcga_ucec"
+
+# BLCA
+# wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/BLCA"
+# clinical_path="./data/tcga_blca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BLCA.csv"
+# output_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Patches"
+# splits_path="./data/splits/tcga_blca"
+
+# LUAD
+# wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
+# clinical_path="./data/tcga_luad_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+# output_dir="/media/volume/Data/TCGA-LUAD/Patches"
+# splits_path="./data/splits/tcga_luad"
 
 # wsi_path="/media/volume/Data/CALGB/raw"
 # csv_path="/media/volume/Data/CALGB/clinical/complete_data_one_image.csv"
 # dataset="CALGB"
 # output_dir="/media/volume/Data/CALGB/Patches"
+
+dataset="TCGA"
 
 num_workers=4
 batch_size=512

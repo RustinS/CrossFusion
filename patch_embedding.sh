@@ -1,15 +1,33 @@
 #!/usr/bin/env bash
 
+# BRCA
 # wsi_path="/media/volume/Data/TCGA/BRCA-Diagnostic-Slides"
 # patches_path="/media/volume/Data/TCGA/Patches"
 # csv_path="/media/volume/Data/TCGA/gdc_sample_sheet.tsv"
 # clinical_path="/media/volume/Data/TCGA_Data/Clinical/tcga_brca_patch_gcn.csv"
 
-wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
-clinical_path="./data/tcga_luad_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/tcga_luad"
-patches_path="/media/volume/Data/TCGA-LUAD/Patches"
+# LUAD
+# wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
+# clinical_path="./data/tcga_luad_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+# splits_path="./data/splits/tcga_luad"
+# patches_path="/media/volume/Data/TCGA-LUAD/Patches"
+
+# BLCA
+# wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/BLCA"
+# clinical_path="./data/tcga_blca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BLCA.csv"
+# patches_path="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Patches"
+# splits_path="./data/splits/tcga_blca"
+# output_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Features"
+
+# UCEC
+wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
+clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+patches_path="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+splits_path="./data/splits/tcga_ucec"
+output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
 
 backbone="resnet50"
 # backbone="hug_quilt"
@@ -17,7 +35,6 @@ backbone="resnet50"
 patch_size=512
 batch_size=256
 num_workers=4
-output_dir="/media/volume/Data/TCGA-LUAD/Features"
 embed_dim=2048
 seed=0
 

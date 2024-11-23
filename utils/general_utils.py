@@ -79,6 +79,7 @@ def get_training_args():
     parser.add_argument("--backbone-dim", type=int, help="Backbone features dimension.")
     parser.add_argument("--alpha-surv", type=float, help="Alpha for survival loss.")
     parser.add_argument("--es-patience", type=int, help="Early stopping patience.")
+    parser.add_argument("--dataset-name", type=str, help="Dataset name.")
 
     args = parser.parse_args()
 

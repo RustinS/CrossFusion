@@ -7,8 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from conch.open_clip_custom import create_model_from_pretrained
-from efficientnet_pytorch import EfficientNet
+# from conch.open_clip_custom import create_model_from_pretrained
 from einops import rearrange
 from PIL import Image
 from torchvision import models, transforms
@@ -44,9 +43,10 @@ def get_wsi_transform(patch_size, backbone=None):
             ]
         )
     elif backbone == "conch":
-        _, transformlist = create_model_from_pretrained(
-            "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
-        )
+        # _, transformlist = create_model_from_pretrained(
+        #     "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
+        # )
+        pass
     elif "hug" not in backbone.split("_"):
         transformlist = transforms.Compose(
             [
@@ -76,10 +76,11 @@ def setup(args):
         model.fc = torch.nn.Identity()
 
     if args.backbone == "conch":
-        model, _ = create_model_from_pretrained(
-            "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
-        )
-        args.embed_dim = 512
+        # model, _ = create_model_from_pretrained(
+        #     "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
+        # )
+        # args.embed_dim = 512
+        pass
 
     if args.backbone == "vit_b_16":
         model = models.vit_b_16(weights=models.ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1)
@@ -159,12 +160,7 @@ def embed(args, model, wsi_name, wsi_patch_loader, backbone, mag_output_base, de
     for batch in tqdm(wsi_patch_loader):
         patch_batch = batch.to(device)
         with torch.no_grad():
-            if backbone == "efficientnet-b1":
-                bs = patch_batch.shape[0]
-                patch_emb = model.extract_features(patch_batch)
-                patch_emb = torch.nn.functional.adaptive_avg_pool2d(patch_emb, output_size=(1))
-                patch_emb = patch_emb.view(bs, -1)
-            elif "hug" in args.backbone.split("_"):
+            if "hug" in args.backbone.split("_"):
                 patch_batch = patch_batch.squeeze(dim=1)
                 patch_emb = model(pixel_values=patch_batch)
                 patch_emb = patch_emb.pooler_output

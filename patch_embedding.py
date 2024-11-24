@@ -6,8 +6,9 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import timm
 import torch
-# from conch.open_clip_custom import create_model_from_pretrained
+from conch.open_clip_custom import create_model_from_pretrained
 from einops import rearrange
 from PIL import Image
 from torchvision import models, transforms
@@ -43,10 +44,18 @@ def get_wsi_transform(patch_size, backbone=None):
             ]
         )
     elif backbone == "conch":
-        # _, transformlist = create_model_from_pretrained(
-        #     "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
-        # )
-        pass
+        _, transformlist = create_model_from_pretrained(
+            "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
+        )
+    elif backbone == "prov_gigapath":
+        transformlist = transforms.Compose(
+            [
+                transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ]
+        )
     elif "hug" not in backbone.split("_"):
         transformlist = transforms.Compose(
             [
@@ -76,11 +85,14 @@ def setup(args):
         model.fc = torch.nn.Identity()
 
     if args.backbone == "conch":
-        # model, _ = create_model_from_pretrained(
-        #     "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
-        # )
-        # args.embed_dim = 512
-        pass
+        model, _ = create_model_from_pretrained(
+            "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
+        )
+        args.embed_dim = 512
+
+    if args.backbone == "prov_gigapath":
+        model = timm.create_model("hf_hub:prov-gigapath/prov-gigapath", pretrained=True)
+        args.embed_dim = 1536
 
     if args.backbone == "vit_b_16":
         model = models.vit_b_16(weights=models.ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1)
@@ -272,7 +284,7 @@ def get_opts(parser):
     group.add_argument(
         "--backbone",
         default="vit_b_16",
-        choices=["resnet50", "hug_quilt", "hug_dinov2", "conch", "vit_b_16"],
+        choices=["resnet50", "hug_quilt", "hug_dinov2", "conch", "vit_b_16", "prov_gigapath"],
         help="pretrained network to use",
         type=str,
     )

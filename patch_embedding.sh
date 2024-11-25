@@ -12,7 +12,7 @@ clinical_path="./data/tcga_luad_all_clean.csv.zip"
 csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
 splits_path="./data/splits/tcga_luad"
 patches_path="/media/volume/Data/TCGA-LUAD/Patches"
-output_dir="/media/volume/Data/TCGA-LUAD/Patches/Features"
+output_dir="/media/volume/Data/TCGA-LUAD/Features"
 
 # BLCA
 # wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/BLCA"

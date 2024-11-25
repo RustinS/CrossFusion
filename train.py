@@ -354,4 +354,4 @@ if __name__ == "__main__":
     best_val_cindex_list = np.array(best_val_cindex_list)
     mean_c_index = np.mean(best_val_cindex_list)
     std_c_index = np.std(best_val_cindex_list)
-    print_log_message(f"TCGA-{args.dataset_name} Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)
+    print_log_message(f"TCGA-{args.dataset_name} with {args.backbone} Backbone Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)

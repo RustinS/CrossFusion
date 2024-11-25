@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
 
-# dataset_name=LUAD
-# clinical_path="./data/tcga_luad_all_clean.csv.zip"
-# csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-# splits_path="./data/splits/tcga_luad"
-# img_dir="/media/volume/Data/TCGA-LUAD/Patches"
-# pt_dir="/media/volume/Data/TCGA-LUAD/Features"
-# save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
+dataset_name=LUAD
+clinical_path="./data/tcga_luad_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+splits_path="./data/splits/tcga_luad"
+img_dir="/media/volume/Data/TCGA-LUAD/Patches"
+pt_dir="/media/volume/Data/TCGA-LUAD/Features"
+save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 
-dataset_name=UCEC
-clinical_path="./data/tcga_ucec_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
-splits_path="./data/splits/tcga_ucec"
-img_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
-pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
-save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
+# dataset_name=UCEC
+# clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+# splits_path="./data/splits/tcga_ucec"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
+
+backbone="prov_gigapath"
+backbone_dim=1536
 
 # backbone="hug_quilt"
 # backbone_dim=768
@@ -22,8 +25,8 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
 # backbone="conch"
 # backbone_dim=512
 
-backbone="resnet50"
-backbone_dim=2048
+# backbone="resnet50"
+# backbone_dim=2048
 
 magnifications="5 10 20"
 model_name="FirstAttn"

@@ -10,7 +10,10 @@ import timm
 import torch
 from conch.open_clip_custom import create_model_from_pretrained
 from einops import rearrange
+from huggingface_hub import login
 from PIL import Image
+from timm.data import resolve_data_config
+from timm.data.transforms_factory import create_transform
 from torchvision import models, transforms
 from torchvision.transforms import InterpolationMode
 from tqdm import tqdm
@@ -70,6 +73,9 @@ def get_wsi_transform(patch_size, backbone=None):
         transformlist = AutoImageProcessor.from_pretrained("facebook/dinov2-base")
     elif backbone == "hug_quilt":
         transformlist = AutoProcessor.from_pretrained("wisdomik/QuiltNet-B-32")
+    elif backbone == "uni":
+        model = timm.create_model("hf-hub:MahmoodLab/uni", pretrained=True, init_values=1e-5, dynamic_img_size=True)
+        transformlist = create_transform(**resolve_data_config(model.pretrained_cfg, model=model))
     else:
         transformlist = None
     return transformlist
@@ -89,6 +95,10 @@ def setup(args):
             "conch_ViT-B-16", "hf_hub:MahmoodLab/conch", hf_auth_token="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"
         )
         args.embed_dim = 512
+
+    if args.backbone == "uni":
+        model = timm.create_model("hf-hub:MahmoodLab/uni", pretrained=True, init_values=1e-5, dynamic_img_size=True)
+        args.embed_dim = 1024
 
     if args.backbone == "prov_gigapath":
         model = timm.create_model("hf_hub:prov-gigapath/prov-gigapath", pretrained=True)
@@ -284,7 +294,7 @@ def get_opts(parser):
     group.add_argument(
         "--backbone",
         default="vit_b_16",
-        choices=["resnet50", "hug_quilt", "hug_dinov2", "conch", "vit_b_16", "prov_gigapath"],
+        choices=["resnet50", "hug_quilt", "hug_dinov2", "conch", "vit_b_16", "prov_gigapath", "uni"],
         help="pretrained network to use",
         type=str,
     )

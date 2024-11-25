@@ -199,7 +199,7 @@ class WSIDataset(torch.utils.data.Dataset):
         patch = self.process_patch(patch, self.black_threshold, self.white_threshold, self.threshold, self.patch_size)
 
         if patch is not None:
-            return self.transform(patch)
+            return self.transform(patch), patch_coord
         else:
             return None
 
@@ -340,7 +340,8 @@ def generate_extra_patches(args, min_patch_nums, wsi, mask, mag_level, patch_coo
     sorted_patches, sorted_coordinates = zip(*sorted_patches_with_coords)
 
     patch_tensors_list = list(sorted_patches)
-    return patch_tensors_list
+    sorted_coordinates = list(sorted_coordinates)
+    return patch_tensors_list, sorted_coordinates
 
 
 def create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=0, power=-1):
@@ -368,7 +369,7 @@ def create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_
         )
 
 
-def save_patches(output_path, patch_tensors_list):
+def save_patches(output_path, patch_tensors_list, patch_coords_list):
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     to_pil = transforms.ToPILImage()
@@ -376,6 +377,9 @@ def save_patches(output_path, patch_tensors_list):
         if isinstance(patch, torch.Tensor):
             patch = to_pil(patch)
         patch.save(os.path.join(output_path, f"{patch_idx}.jpeg"))
+
+    patch_coords = np.array(patch_coords_list)
+    np.save(os.path.join(output_path, "coords.npy"), patch_coords)
 
 
 if __name__ == "__main__":
@@ -473,14 +477,14 @@ if __name__ == "__main__":
                     WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords, num_workers=args.num_workers, power=power
                 )
 
-            # data_loader = create_data_loader(WSIDataset, collate_fn, args, wsi_data, mag_level, patch_coords)
-
             try:
                 patch_tensors_list = []
+                patch_coords_list = []
                 for batch in tqdm(data_loader):
                     if batch.size(0) == 0:
                         continue
-                    patch_tensors_list += batch.squeeze(dim=1)
+                    patch_tensors_list += batch[0].squeeze(dim=1)
+                    patch_coords_list += batch[1].squeeze(dim=1)
             except Exception as e:
                 print_log_message(f"Error: {e}")
                 del data_loader
@@ -494,9 +498,9 @@ if __name__ == "__main__":
 
             print_log_message(f"Number of filtered patches: {len(patch_tensors_list)}")
             if len(patch_tensors_list) < min_patch_nums[mag_level]:
-                patch_tensors_list = generate_extra_patches(args, min_patch_nums, wsi, mask, mag_level, patch_coords, patch_tensors_list)
+                patch_tensors_list, patch_coords_list = generate_extra_patches(args, min_patch_nums, wsi, mask, mag_level, patch_coords_list, patch_tensors_list)
 
             print_log_message("Saving patches ...")
-            save_patches(output_path, patch_tensors_list)
+            save_patches(output_path, patch_tensors_list, patch_coords_list)
 
         del wsi, mask

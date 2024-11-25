@@ -32,8 +32,9 @@ output_dir="/media/volume/Data/TCGA-LUAD/Features"
 
 # backbone="resnet50"
 # backbone="conch"
+backbone="uni"
 # backbone="hug_quilt"
-backbone="prov_gigapath"
+# backbone="prov_gigapath"
 
 patch_size=512
 batch_size=256

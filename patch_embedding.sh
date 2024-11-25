@@ -42,7 +42,7 @@ num_workers=4
 embed_dim=2048
 seed=0
 
-python patch_embedding.py \
+CUDA_VISIBLE_DEVICES=2 python patch_embedding.py \
     --wsi_path $wsi_path \
     --patches_path $patches_path \
     --csv_path $csv_path \

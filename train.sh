@@ -19,6 +19,9 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 backbone="prov_gigapath"
 backbone_dim=1536
 
+# backbone="uni"
+# backbone_dim=1024
+
 # backbone="hug_quilt"
 # backbone_dim=768
 

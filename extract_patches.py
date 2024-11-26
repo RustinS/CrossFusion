@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import random
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -201,7 +202,7 @@ class WSIDataset(torch.utils.data.Dataset):
         if patch is not None:
             return self.transform(patch), patch_coord
         else:
-            return None
+            return None, None
 
     @staticmethod
     def process_patch(patch, black_threshold=5, white_threshold=240, threshold=15, patch_size=512):
@@ -246,10 +247,20 @@ class WSIDataset(torch.utils.data.Dataset):
 
 
 def collate_fn(batch):
-    batch = [item.cpu() for item in batch if item is not None]
+    batch = [(img.cpu(), lst) for img, lst in batch if img is not None and lst is not None]
+
     if len(batch) == 0:
-        return torch.tensor([])
-    return torch.stack(batch, dim=0)
+        return torch.tensor([]), []
+
+    images, lists = zip(*batch)
+
+    images_tensor = torch.stack(images, dim=0)
+
+    return images_tensor, lists
+    # batch = [item.cpu() for item in batch if item is not None]
+    # if len(batch) == 0:
+    #     return torch.tensor([])
+    # return torch.stack(batch, dim=0)
 
 
 def chunks(lst, n):
@@ -425,7 +436,7 @@ if __name__ == "__main__":
         print_log_message("Generating tissue mask ...")
         try:
             wsi = WSIReader.open(input_img=wsi_path)
-            mask = wsi.tissue_mask(method="morphological", resolution=1.25, units="power")
+            mask = wsi.tissue_mask(method="otsu", resolution=1.25, units="power")
             power = -1
         except Exception as e:
             print_log_message(f"Error: {e}")
@@ -481,12 +492,13 @@ if __name__ == "__main__":
                 patch_tensors_list = []
                 patch_coords_list = []
                 for batch in tqdm(data_loader):
-                    if batch.size(0) == 0:
+                    if batch[0].size(0) == 0:
                         continue
                     patch_tensors_list += batch[0].squeeze(dim=1)
-                    patch_coords_list += batch[1].squeeze(dim=1)
+                    patch_coords_list += batch[1]
             except Exception as e:
-                print_log_message(f"Error: {e}")
+                traceback.print_exc()
+                print_error_message(f"Error: {e}")
                 del data_loader
                 continue
 

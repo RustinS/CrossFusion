@@ -16,8 +16,8 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
 
-backbone="prov_gigapath"
-backbone_dim=1536
+# backbone="prov_gigapath"
+# backbone_dim=1536
 
 # backbone="uni"
 # backbone_dim=1024
@@ -28,11 +28,15 @@ backbone_dim=1536
 # backbone="conch"
 # backbone_dim=512
 
-# backbone="resnet50"
-# backbone_dim=2048
+backbone="resnet50"
+backbone_dim=2048
+
+# model_name="FirstAttn"
+# model_name="AMIL"
+# model_name="DSMIL"
+model_name="TransMIL"
 
 magnifications="5 10 20"
-model_name="FirstAttn"
 data_workers=12
 prefetch_factor=3
 grad_accum_steps=32
@@ -42,7 +46,7 @@ batch_size=1
 random_seed=7
 num_epochs=100
 continue_training=0
-es_patience=40
+es_patience=20
 
 learning_rate=3e-4
 weight_decay=4e-6

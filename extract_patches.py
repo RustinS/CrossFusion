@@ -436,7 +436,7 @@ if __name__ == "__main__":
         print_log_message("Generating tissue mask ...")
         try:
             wsi = WSIReader.open(input_img=wsi_path)
-            mask = wsi.tissue_mask(method="otsu", resolution=1.25, units="power")
+            mask = wsi.tissue_mask(method="morphological", resolution=1.25, units="power")
             power = -1
         except Exception as e:
             print_log_message(f"Error: {e}")

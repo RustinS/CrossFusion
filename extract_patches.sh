@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 # UCEC
-wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
-clinical_path="./data/tcga_ucec_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
-output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
-splits_path="./data/splits/tcga_ucec"
+# wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
+# clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+# output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+# splits_path="./data/splits/tcga_ucec"
 
 # BLCA
 # wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/BLCA"
@@ -21,6 +21,14 @@ splits_path="./data/splits/tcga_ucec"
 # output_dir="/media/volume/Data/TCGA-LUAD/Patches"
 # splits_path="./data/splits/tcga_luad"
 
+# BRCA
+wsi_path="/media/volume/Data/TCGA-BRCA/Slides"
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+output_dir="/media/volume/Data/TCGA-BRCA/Patches"
+splits_path="./data/splits/tcga_brca"
+
+# CALGB
 # wsi_path="/media/volume/Data/CALGB/raw"
 # csv_path="/media/volume/Data/CALGB/clinical/complete_data_one_image.csv"
 # dataset="CALGB"

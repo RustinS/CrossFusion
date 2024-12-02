@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 
-dataset_name=LUAD
-clinical_path="./data/tcga_luad_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
-splits_path="./data/splits/tcga_luad"
-img_dir="/media/volume/Data/TCGA-LUAD/Patches"
-pt_dir="/media/volume/Data/TCGA-LUAD/Features"
-save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
+dataset_name=BRCA
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+splits_path="./data/splits/tcga_brca"
+img_dir="/media/volume/Data/TCGA-BRCA/Patches"
+pt_dir="/media/volume/Data/TCGA-BRCA/Features"
+save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
+
+# dataset_name=BRCA
+# clinical_path="./data/tcga_brca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+# splits_path="./data/splits/tcga_brca"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BRCA"
+
+# dataset_name=LUAD
+# clinical_path="./data/tcga_luad_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
+# splits_path="./data/splits/tcga_luad"
+# img_dir="/media/volume/Data/TCGA-LUAD/Patches"
+# pt_dir="/media/volume/Data/TCGA-LUAD/Features"
+# save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 
 # dataset_name=UCEC
 # clinical_path="./data/tcga_ucec_all_clean.csv.zip"
@@ -16,8 +32,27 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/LUAD"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/UCEC"
 
-backbone="prov_gigapath"
-backbone_dim=1536
+# dataset_name=BLCA
+# clinical_path="./data/tcga_blca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BLCA.csv"
+# splits_path="./data/splits/tcga_blca"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BLCA"
+
+# dataset_name=GBMLGG
+# clinical_path="./data/tcga_gbmlgg_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_GBMLGG.csv"
+# splits_path="./data/splits/tcga_gbmlgg"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
+
+# backbone="resnet50"
+# backbone_dim=2048
+
+# backbone="conch"
+# backbone_dim=512
 
 # backbone="uni"
 # backbone_dim=1024
@@ -25,14 +60,15 @@ backbone_dim=1536
 # backbone="hug_quilt"
 # backbone_dim=768
 
-# backbone="conch"
-# backbone_dim=512
+backbone="prov_gigapath"
+backbone_dim=1536
 
-# backbone="resnet50"
-# backbone_dim=2048
+model_name="FirstAttn"
+# model_name="AMIL"
+# model_name="DSMIL"
+# model_name="TransMIL"
 
 magnifications="5 10 20"
-model_name="FirstAttn"
 data_workers=12
 prefetch_factor=3
 grad_accum_steps=32
@@ -43,6 +79,7 @@ random_seed=7
 num_epochs=100
 continue_training=0
 es_patience=40
+# es_patience=20
 
 learning_rate=3e-4
 weight_decay=4e-6
@@ -54,7 +91,7 @@ embed_dim=256
 num_heads=4
 num_attn_layers=1
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py \
+CUDA_VISIBLE_DEVICES=0 python train.py \
     --csv-path $csv_path \
     --clinical-path $clinical_path \
     --img-dir $img_dir \

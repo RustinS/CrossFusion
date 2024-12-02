@@ -10,9 +10,12 @@ from sksurv.metrics import concordance_index_censored
 from torch.cuda.amp import GradScaler, autocast
 
 from datasets.dataset_survival import GenericMILSurvivalDataset
+from models.AMIL import AMIL
+from models.DSMIL import DSMIL
 from models.first_attn import FirstAttn
 from models.second_attn import SecondAttn
 from models.third_attn import ThirdAttn
+from models.TransMIL import TransMIL
 from utils.data_utils import get_split_loader
 from utils.general_utils import create_pbar, get_training_args, set_random_seed
 from utils.print_utils import print_info_message, print_log_message
@@ -49,6 +52,22 @@ def build_model(opts):
             embed_dim=opts.embed_dim,
             num_heads=opts.num_heads,
             num_layers=opts.num_attn_layers,
+            n_classes=opts.n_classes,
+        )
+    elif opts.model_name == "AMIL":
+        model = AMIL(
+            backbone_dim=opts.backbone_dim,
+            n_classes=opts.n_classes,
+            gate=True,
+        )
+    elif opts.model_name == "TransMIL":
+        model = TransMIL(
+            backbone_dim=opts.backbone_dim,
+            n_classes=opts.n_classes,
+        )
+    elif opts.model_name == "DSMIL":
+        model = DSMIL(
+            backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
 
@@ -354,4 +373,4 @@ if __name__ == "__main__":
     best_val_cindex_list = np.array(best_val_cindex_list)
     mean_c_index = np.mean(best_val_cindex_list)
     std_c_index = np.std(best_val_cindex_list)
-    print_log_message(f"TCGA-{args.dataset_name} with {args.backbone} Backbone Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)
+    print_log_message(f"TCGA-{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)

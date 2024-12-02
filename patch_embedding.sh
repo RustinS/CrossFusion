@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
 # BRCA
-# wsi_path="/media/volume/Data/TCGA/BRCA-Diagnostic-Slides"
-# patches_path="/media/volume/Data/TCGA/Patches"
-# csv_path="/media/volume/Data/TCGA/gdc_sample_sheet.tsv"
-# clinical_path="/media/volume/Data/TCGA_Data/Clinical/tcga_brca_patch_gcn.csv"
+wsi_path="/media/volume/Data/TCGA/BRCA-Diagnostic-Slides"
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+patches_path="/media/volume/Data/TCGA-BRCA/Patches"
+splits_path="./data/splits/tcga_brca"
+output_dir="/media/volume/Data/TCGA-BRCA/Features"
 
 # LUAD
 # wsi_path="/media/volume/Data/TCGA-LUAD/Slides"
@@ -23,12 +25,12 @@
 # output_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Features"
 
 # UCEC
-wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
-clinical_path="./data/tcga_ucec_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
-patches_path="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
-splits_path="./data/splits/tcga_ucec"
-output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
+# wsi_path="/projects/patho5nobackup/TCGA/TCGA_Data/UCEC"
+# clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+# patches_path="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Patches"
+# splits_path="./data/splits/tcga_ucec"
+# output_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/Features"
 
 # backbone="resnet50"
 # backbone="conch"
@@ -43,7 +45,7 @@ num_workers=4
 embed_dim=2048
 seed=0
 
-CUDA_VISIBLE_DEVICES=2 python patch_embedding.py \
+CUDA_VISIBLE_DEVICES=0 python patch_embedding.py \
     --wsi_path $wsi_path \
     --patches_path $patches_path \
     --csv_path $csv_path \

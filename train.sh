@@ -8,6 +8,14 @@ img_dir="/media/volume/Data/TCGA-BRCA/Patches"
 pt_dir="/media/volume/Data/TCGA-BRCA/Features"
 save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 
+# dataset_name=BRCA
+# clinical_path="./data/tcga_brca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+# splits_path="./data/splits/tcga_brca"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BRCA"
+
 # dataset_name=LUAD
 # clinical_path="./data/tcga_luad_all_clean.csv.zip"
 # csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
@@ -43,8 +51,8 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # backbone="resnet50"
 # backbone_dim=2048
 
-backbone="conch"
-backbone_dim=512
+# backbone="conch"
+# backbone_dim=512
 
 # backbone="uni"
 # backbone_dim=1024
@@ -52,8 +60,8 @@ backbone_dim=512
 # backbone="hug_quilt"
 # backbone_dim=768
 
-# backbone="prov_gigapath"
-# backbone_dim=1536
+backbone="prov_gigapath"
+backbone_dim=1536
 
 model_name="FirstAttn"
 # model_name="AMIL"

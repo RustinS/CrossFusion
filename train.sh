@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-dataset_name=BRCA
-clinical_path="./data/tcga_brca_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
-splits_path="./data/splits/tcga_brca"
-img_dir="/media/volume/Data/TCGA-BRCA/Patches"
-pt_dir="/media/volume/Data/TCGA-BRCA/Features"
-save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
+# dataset_name=BRCA
+# clinical_path="./data/tcga_brca_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+# splits_path="./data/splits/tcga_brca"
+# img_dir="/media/volume/Data/TCGA-BRCA/Patches"
+# pt_dir="/media/volume/Data/TCGA-BRCA/Features"
+# save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 
 # dataset_name=BRCA
 # clinical_path="./data/tcga_brca_all_clean.csv.zip"
@@ -15,6 +15,14 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Patches"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BRCA"
+
+dataset_name=COADREAD
+clinical_path="./data/tcga_coadread_all_clean.csv"
+csv_path="./data/TCGA-Manifests/gdc_manifest_COADREAD.csv"
+splits_path="./data/splits/tcga_coadread"
+img_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Patches"
+pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Features"
+save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 
 # dataset_name=LUAD
 # clinical_path="./data/tcga_luad_all_clean.csv.zip"
@@ -48,8 +56,8 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
 
-# backbone="resnet50"
-# backbone_dim=2048
+backbone="resnet50"
+backbone_dim=2048
 
 # backbone="conch"
 # backbone_dim=512

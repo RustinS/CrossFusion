@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+dataset_name=BRCA
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+splits_path="./data/splits/tcga_brca"
+img_dir="/media/volume/Data/TCGA-BRCA/Patches"
+pt_dir="/media/volume/Data/TCGA-BRCA/Features"
+save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
+
 # dataset_name=LUAD
 # clinical_path="./data/tcga_luad_all_clean.csv.zip"
 # csv_path="./data/TCGA-Manifests/gdc_manifest_LUAD.csv"
@@ -24,19 +32,19 @@
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BLCA"
 
-dataset_name=GBMLGG
-clinical_path="./data/tcga_gbmlgg_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_GBMLGG.csv"
-splits_path="./data/splits/tcga_gbmlgg"
-img_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Patches"
-pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
-save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
+# dataset_name=GBMLGG
+# clinical_path="./data/tcga_gbmlgg_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_GBMLGG.csv"
+# splits_path="./data/splits/tcga_gbmlgg"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
 
 # backbone="resnet50"
 # backbone_dim=2048
 
-# backbone="conch"
-# backbone_dim=512
+backbone="conch"
+backbone_dim=512
 
 # backbone="uni"
 # backbone_dim=1024
@@ -44,8 +52,8 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
 # backbone="hug_quilt"
 # backbone_dim=768
 
-backbone="prov_gigapath"
-backbone_dim=1536
+# backbone="prov_gigapath"
+# backbone_dim=1536
 
 model_name="FirstAttn"
 # model_name="AMIL"
@@ -62,8 +70,8 @@ batch_size=1
 random_seed=7
 num_epochs=100
 continue_training=0
-# es_patience=40
-es_patience=20
+es_patience=40
+# es_patience=20
 
 learning_rate=3e-4
 weight_decay=4e-6
@@ -75,7 +83,7 @@ embed_dim=256
 num_heads=4
 num_attn_layers=1
 
-CUDA_VISIBLE_DEVICES=2 python train.py \
+CUDA_VISIBLE_DEVICES=0 python train.py \
     --csv-path $csv_path \
     --clinical-path $clinical_path \
     --img-dir $img_dir \

@@ -43,14 +43,14 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # backbone="resnet50"
 # backbone_dim=2048
 
-backbone="conch"
-backbone_dim=512
+# backbone="conch"
+# backbone_dim=512
 
 # backbone="uni"
 # backbone_dim=1024
 
-# backbone="hug_quilt"
-# backbone_dim=768
+backbone="hug_quilt"
+backbone_dim=768
 
 # backbone="prov_gigapath"
 # backbone_dim=1536

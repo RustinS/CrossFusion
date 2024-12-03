@@ -39,21 +39,6 @@ def build_model(opts):
             backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
-    elif opts.model_name == "SecondAttn":
-        model = SecondAttn(
-            embed_dim=opts.embed_dim,
-            num_heads=opts.num_heads,
-            num_layers=opts.num_attn_layers,
-            backbone_dim=opts.backbone_dim,
-            n_classes=opts.n_classes,
-        )
-    elif opts.model_name == "ThirdAttn":
-        model = ThirdAttn(
-            embed_dim=opts.embed_dim,
-            num_heads=opts.num_heads,
-            num_layers=opts.num_attn_layers,
-            n_classes=opts.n_classes,
-        )
     elif opts.model_name == "AMIL":
         model = AMIL(
             backbone_dim=opts.backbone_dim,

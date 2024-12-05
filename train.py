@@ -13,6 +13,7 @@ from datasets.dataset_survival import GenericMILSurvivalDataset
 from models.AMIL import AMIL
 from models.DSMIL import DSMIL
 from models.first_attn import FirstAttn
+from models.SCMIL import SCMIL
 from models.TransMIL import TransMIL
 from utils.data_utils import get_split_loader
 from utils.general_utils import create_pbar, get_training_args, set_random_seed
@@ -53,6 +54,8 @@ def build_model(opts):
             backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
+    elif opts.model_name == "SCMIL":
+        model = SCMIL(input_size=opts.backbone_dim, n_classes=opts.n_classes, hidden_size=opts.embed_dim)
 
     model = model.to("cuda:0")
     model = torch.nn.DataParallel(model)

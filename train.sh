@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# dataset_name=BRCA
-# clinical_path="./data/tcga_brca_all_clean.csv.zip"
-# csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
-# splits_path="./data/splits/tcga_brca"
-# img_dir="/media/volume/Data/TCGA-BRCA/Patches"
-# pt_dir="/media/volume/Data/TCGA-BRCA/Features"
-# save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
+dataset_name=BRCA
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+splits_path="./data/splits/tcga_brca"
+img_dir="/media/volume/Data/TCGA-BRCA/Patches"
+pt_dir="/media/volume/Data/TCGA-BRCA/Features"
+save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 
 # dataset_name=BRCA
 # clinical_path="./data/tcga_brca_all_clean.csv.zip"
@@ -75,7 +75,7 @@ backbone_dim=2048
 # model_name="AMIL"
 # model_name="DSMIL"
 # model_name="TransMIL"
-model_name="AttentionMIL"
+model_name="SCMIL"
 
 magnifications="5 10 20"
 data_workers=12
@@ -96,7 +96,8 @@ lr_decay=0.5
 loss_fn="nll_surv"
 alpha_surv=0.2
 
-embed_dim=256
+# embed_dim=256
+embed_dim=512
 num_heads=4
 num_attn_layers=1
 

@@ -158,6 +158,7 @@ class GenericWSISurvivalDataset(Dataset):
         return len(self.slide_data)
 
     def summarize(self):
+        print_info_message(f"Number of cases: {len(self.patient_data['case_id'])}")
         print_info_message(f"Number of slides: {len(self.slide_data)}")
         print_info_message(f"Label column: {self.label_col}")
         print_info_message(f"Number of classes: {self.num_classes}")

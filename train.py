@@ -13,8 +13,6 @@ from datasets.dataset_survival import GenericMILSurvivalDataset
 from models.AMIL import AMIL
 from models.DSMIL import DSMIL
 from models.first_attn import FirstAttn
-from models.second_attn import SecondAttn
-from models.third_attn import ThirdAttn
 from models.TransMIL import TransMIL
 from utils.data_utils import get_split_loader
 from utils.general_utils import create_pbar, get_training_args, set_random_seed

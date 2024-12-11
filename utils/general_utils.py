@@ -80,6 +80,7 @@ def get_training_args():
     parser.add_argument("--alpha-surv", type=float, help="Alpha for survival loss.")
     parser.add_argument("--es-patience", type=int, help="Early stopping patience.")
     parser.add_argument("--dataset-name", type=str, help="Dataset name.")
+    parser.add_argument("--warmup-epochs", type=int, help="Number of warmup epochs.")
 
     args = parser.parse_args()
 

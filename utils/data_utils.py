@@ -178,6 +178,8 @@ def get_split_loader(split_dataset, opts, training=False, weighted=False, batch_
                 sampler=WeightedRandomSampler(weights, len(weights)),
                 worker_init_fn=worker_init_fn,
                 generator=torch.Generator().manual_seed(opts.random_seed),
+                pin_memory=True,
+                persistent_workers=True,
                 **kwargs,
             )
         else:
@@ -187,6 +189,8 @@ def get_split_loader(split_dataset, opts, training=False, weighted=False, batch_
                 sampler=RandomSampler(split_dataset),
                 worker_init_fn=worker_init_fn,
                 generator=torch.Generator().manual_seed(opts.random_seed),
+                pin_memory=True,
+                persistent_workers=True,
                 **kwargs,
             )
     else:
@@ -196,6 +200,8 @@ def get_split_loader(split_dataset, opts, training=False, weighted=False, batch_
             sampler=SequentialSampler(split_dataset),
             worker_init_fn=worker_init_fn,
             generator=torch.Generator().manual_seed(opts.random_seed),
+            pin_memory=True,
+            persistent_workers=True,
             **kwargs,
         )
 

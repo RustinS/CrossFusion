@@ -4,19 +4,36 @@ import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+# def nll_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
+#     batch_size = len(Y)
+#     Y = Y.view(batch_size, 1)  # ground truth bin, 1,2,...,k
+#     c = c.view(batch_size, 1).to(hazards.dtype)  # censorship status, 0 or 1
+#     if S is None:
+#         S = torch.cumprod(1 - hazards, dtype=hazards.dtype, dim=1)  # surival is cumulative product of 1 - hazards
+#     else:
+#         S = S.to(hazards.dtype)
+#     # without padding, S(0) = S[0], h(0) = h[0]
+#     # after padding, S(0) = S[1], S(1) = S[2], etc, h(0) = h[0]
+#     # h[y] = h(1)
+#     # S[1] = S(1)
+#     S_padded = torch.cat([torch.ones_like(c, dtype=S.dtype), S], 1)
+
+#     uncensored_loss = -(1 - c) * (
+#         torch.log(torch.gather(S_padded, 1, Y).clamp(min=eps)) + torch.log(torch.gather(hazards, 1, Y).clamp(min=eps))
+#     )
+#     censored_loss = -c * torch.log(torch.gather(S_padded, 1, Y + 1).clamp(min=eps))
+#     neg_l = censored_loss + uncensored_loss
+#     loss = (1 - alpha) * neg_l + alpha * uncensored_loss
+#     loss = loss.mean()
+#     return loss
+
 def nll_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
     batch_size = len(Y)
     Y = Y.view(batch_size, 1)  # ground truth bin, 1,2,...,k
     c = c.view(batch_size, 1).to(hazards.dtype)  # censorship status, 0 or 1
     if S is None:
         S = torch.cumprod(1 - hazards, dtype=hazards.dtype, dim=1)  # surival is cumulative product of 1 - hazards
-    else:
-        S = S.to(hazards.dtype)
-    # without padding, S(0) = S[0], h(0) = h[0]
-    # after padding, S(0) = S[1], S(1) = S[2], etc, h(0) = h[0]
-    # h[y] = h(1)
-    # S[1] = S(1)
-    S_padded = torch.cat([torch.ones_like(c, dtype=S.dtype), S], 1)
+    S_padded = torch.cat([torch.ones_like(c), S], 1)
 
     uncensored_loss = -(1 - c) * (
         torch.log(torch.gather(S_padded, 1, Y).clamp(min=eps)) + torch.log(torch.gather(hazards, 1, Y).clamp(min=eps))
@@ -26,6 +43,20 @@ def nll_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
     loss = (1 - alpha) * neg_l + alpha * uncensored_loss
     loss = loss.mean()
     return loss
+
+# loss_fn(hazards=hazards, S=S, Y=Y_hat, c=c, alpha=0)
+class NLLSurvLoss(object):
+    def __init__(self, alpha=0.15):
+        self.alpha = alpha
+
+    def __call__(self, hazards, S, Y, c, alpha=None):
+        if alpha is None:
+            return nll_loss(hazards, S, Y, c, alpha=self.alpha)
+        else:
+            return nll_loss(hazards, S, Y, c, alpha=alpha)
+
+    # h_padded = torch.cat([torch.zeros_like(c), hazards], 1)
+    # reg = - (1 - c) * (torch.log(torch.gather(hazards, 1, Y)) + torch.gather(torch.cumsum(torch.log(1-h_padded), dim=1), 1, Y))
 
 
 def ce_loss(hazards, S, Y, c, alpha=0.4, eps=1e-7):
@@ -59,21 +90,6 @@ class CrossEntropySurvLoss(object):
             return ce_loss(hazards, S, Y, c, alpha=self.alpha)
         else:
             return ce_loss(hazards, S, Y, c, alpha=alpha)
-
-
-# loss_fn(hazards=hazards, S=S, Y=Y_hat, c=c, alpha=0)
-class NLLSurvLoss(object):
-    def __init__(self, alpha=0.15):
-        self.alpha = alpha
-
-    def __call__(self, hazards, S, Y, c, alpha=None):
-        if alpha is None:
-            return nll_loss(hazards, S, Y, c, alpha=self.alpha)
-        else:
-            return nll_loss(hazards, S, Y, c, alpha=alpha)
-
-    # h_padded = torch.cat([torch.zeros_like(c), hazards], 1)
-    # reg = - (1 - c) * (torch.log(torch.gather(hazards, 1, Y)) + torch.gather(torch.cumsum(torch.log(1-h_padded), dim=1), 1, Y))
 
 
 class CoxSurvLoss(object):
@@ -115,7 +131,7 @@ class EarlyStopping:
         self.counter = 0
         self.best_score = None
         self.early_stop = False
-        self.val_loss_min = np.Inf
+        self.val_loss_min = np.inf
 
     def __call__(self, epoch, val_loss, model, ckpt_name="checkpoint.pt"):
         score = -val_loss

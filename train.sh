@@ -56,8 +56,8 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
 
-backbone="resnet50"
-backbone_dim=2048
+# backbone="resnet50"
+# backbone_dim=2048
 
 # backbone="conch"
 # backbone_dim=512
@@ -65,20 +65,22 @@ backbone_dim=2048
 # backbone="uni"
 # backbone_dim=1024
 
-# backbone="hug_quilt"
-# backbone_dim=768
+backbone="hug_quilt"
+backbone_dim=768
 
 # backbone="prov_gigapath"
 # backbone_dim=1536
 
-# model_name="FirstAttn"
+# model_name="CoCoFusion"
+model_name="CoCoFusionX"
+# model_name="CoCoFusionConcat"
 # model_name="AMIL"
 # model_name="DSMIL"
 # model_name="TransMIL"
-model_name="SCMIL"
+# model_name="SCMIL"
 
 magnifications="5 10 20"
-data_workers=12
+data_workers=16
 prefetch_factor=3
 grad_accum_steps=32
 preload=0
@@ -86,18 +88,20 @@ num_folds=5
 batch_size=1
 random_seed=7
 num_epochs=100
+warmup_epochs=5
 continue_training=0
-# es_patience=40
-es_patience=20
+es_patience=15
+# es_patience=10
 
 learning_rate=3e-4
+# learning_rate=3e-5
 weight_decay=4e-6
+# weight_decay=1e-5
 lr_decay=0.5
 loss_fn="nll_surv"
 alpha_surv=0.2
 
-# embed_dim=256
-embed_dim=512
+embed_dim=256
 num_heads=4
 num_attn_layers=1
 
@@ -130,4 +134,5 @@ CUDA_VISIBLE_DEVICES=0 python train.py \
     --lr-decay $lr_decay \
     --alpha-surv $alpha_surv \
     --backbone-dim $backbone_dim \
-    --dataset-name $dataset_name
+    --dataset-name $dataset_name \
+    --warmup-epochs $warmup_epochs

@@ -16,13 +16,13 @@ save_dir="/media/volume/Code/Trained-Models/MsCoConv/BRCA"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BRCA"
 
-dataset_name=COADREAD
-clinical_path="./data/tcga_coadread_all_clean.csv"
-csv_path="./data/TCGA-Manifests/gdc_manifest_COADREAD.csv"
-splits_path="./data/splits/tcga_coadread"
-img_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Patches"
-pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Features"
-save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
+# dataset_name=COADREAD
+# clinical_path="./data/tcga_coadread_all_clean.csv"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_COADREAD.csv"
+# splits_path="./data/splits/tcga_coadread"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Patches"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Features"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 
 # dataset_name=LUAD
 # clinical_path="./data/tcga_luad_all_clean.csv.zip"
@@ -56,8 +56,8 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
 
-# backbone="resnet50"
-# backbone_dim=2048
+backbone="resnet50"
+backbone_dim=2048
 
 # backbone="conch"
 # backbone_dim=512
@@ -65,14 +65,15 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 # backbone="uni"
 # backbone_dim=1024
 
-backbone="hug_quilt"
-backbone_dim=768
+# backbone="hug_quilt"
+# backbone_dim=768
 
 # backbone="prov_gigapath"
 # backbone_dim=1536
 
 # model_name="CoCoFusion"
-model_name="CoCoFusionX"
+# model_name="CoCoFusionX"
+model_name="CoCoFusionXX"
 # model_name="CoCoFusionConcat"
 # model_name="AMIL"
 # model_name="DSMIL"
@@ -90,7 +91,7 @@ random_seed=7
 num_epochs=100
 warmup_epochs=5
 continue_training=0
-es_patience=15
+es_patience=30
 # es_patience=10
 
 learning_rate=3e-4

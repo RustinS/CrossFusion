@@ -233,7 +233,7 @@ def init_weight(m):
     elif isinstance(m, nn.LayerNorm):
         nn.init.constant_(m.bias, 0)
         nn.init.constant_(m.weight, 1.0)
-    elif isinstance(m, nn.Conv2d):
+    elif isinstance(m, (nn.Conv2d, nn.Conv3d)):
         nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
         if m.bias is not None:
             nn.init.constant_(m.bias, 0)
@@ -284,16 +284,19 @@ class ConvProcessor(nn.Module):
         self,
         dim=256,
         num_conv_layers=2,
-        dropout_prob=0.5,
+        dropout_prob=0.2,
         activation="relu",
         use_se=True,
     ):
         super(ConvProcessor, self).__init__()
         self.dim = dim
-        self.conv_channels = dim * 3
+        # self.conv_channels = dim
+        # self.conv_channels = dim * 3
+        self.conv_channels = dim // 2
         self.num_conv_layers = num_conv_layers
         self.use_se = use_se
 
+        # Activation function
         if activation.lower() == "relu":
             self.activation_fn = nn.ReLU(inplace=True)
         elif activation.lower() == "leakyrelu":
@@ -303,60 +306,101 @@ class ConvProcessor(nn.Module):
         else:
             raise ValueError(f"Unsupported activation: {activation}")
 
+        # 3D convolution to process stacked inputs
+        self.conv3d = nn.Conv3d(
+            in_channels=3,  # Three inputs stacked along this dimension
+            out_channels=1,  # Reduce to a single map
+            kernel_size=(1, 1, 1),  # Collapse along the stacked dimension
+            stride=(1, 1, 1),
+            padding=(0, 0, 0),
+        )
+
+        # conv_layers = []
+        # in_channels = dim
+
+        # for i in range(num_conv_layers):
+        #     conv_layers.append(
+        #         MultiScaleConv(
+        #             in_dim=in_channels,
+        #             out_dim=self.conv_channels,
+        #             groups_dim=dim,
+        #         )
+        #     )
+        #     conv_layers.append(nn.GroupNorm(num_groups=32, num_channels=self.conv_channels))
+        #     conv_layers.append(self.activation_fn)
+        #     conv_layers.append(nn.Dropout2d(p=dropout_prob))
+        #     in_channels = self.conv_channels
+
         conv_layers = []
         in_channels = dim
 
-        for i in range(num_conv_layers):
-            conv_layers.append(
-                MultiScaleConv(
-                    in_dim=in_channels,
-                    out_dim=self.conv_channels,
-                    groups_dim=dim,
-                )
+        conv_layers.append(
+            MultiScaleConv(
+                in_dim=in_channels,
+                out_dim=self.conv_channels,
+                groups_dim=self.conv_channels,
             )
-            conv_layers.append(nn.GroupNorm(num_groups=32, num_channels=self.conv_channels))
-            conv_layers.append(self.activation_fn)
-            conv_layers.append(nn.Dropout2d(p=dropout_prob))
-            in_channels = self.conv_channels
+        )
+        # conv_layers.append(nn.GroupNorm(num_groups=self.conv_channels, num_channels=self.conv_channels))
+        conv_layers.append(self.activation_fn)
+        conv_layers.append(nn.Dropout2d(p=dropout_prob))
 
         self.conv_block = nn.Sequential(*conv_layers)
 
-        if self.use_se:
-            self.se_block = SEBlock(self.conv_channels)
+        # if self.use_se:
+        #     self.se_block = SEBlock(self.conv_channels)
+
+        # self.linear = nn.Sequential(
+        #     nn.Linear(self.conv_channels, dim),
+        #     self.activation_fn,
+        #     nn.Dropout(p=dropout_prob),
+        # )
+        # if self.use_se:
+        #     self.se_block = SEBlock(self.conv_channels)
+
+        # if self.use_se:
+        #     self.se_block = SEBlock(self.dim)
 
         self.linear = nn.Sequential(
             nn.Linear(self.conv_channels, dim),
-            self.activation_fn,
-            nn.Dropout(p=dropout_prob),
+            nn.LayerNorm(dim),
+            # self.activation_fn,
+            # nn.Dropout(p=dropout_prob),
         )
 
-    def forward(self, A, B, C, H, W):
-        B_size = A.size(0)
-        N = A.size(1)
-        dim = A.size(2)
+    def forward(self, x1, x2, x3, H, W):
+        """
+        Args:
+            x1, x2, x3: Each is a tensor of shape [B, N, dim]
+        """
+        # Reshape each input: [B, N, dim] -> [B, dim, H, W]
+        B, N, dim = x1.size()
+        H = W = int(N**0.5)  # Assuming N = H * W
+        x1 = x1.permute(0, 2, 1).view(B, dim, H, W)
+        x2 = x2.permute(0, 2, 1).view(B, dim, H, W)
+        x3 = x3.permute(0, 2, 1).view(B, dim, H, W)
 
-        assert N == H * W, "N must equal H * W"
+        # Stack along a new dimension: [B, 3, dim, H, W]
+        x = torch.stack([x1, x2, x3], dim=1)
 
-        stacked = torch.stack([A, B, C], dim=1)  # [B, 3, N, dim]
+        # Apply 3D convolution to reduce [B, 3, dim, H, W] -> [B, dim, H, W]
+        x = self.conv3d(x).squeeze(1)  # Squeeze out the reduced dimension (size 1)
 
-        stacked = stacked.view(B_size, 3, H, W, dim)  # [B, 3, H, W, dim]
+        # Pass through 2D convolutional layers
+        x = self.conv_block(x)
 
-        stacked = stacked.permute(0, 4, 1, 2, 3).contiguous()  # [B, dim, 3, H, W]
+        # Apply SE block if enabled
+        # if self.use_se:
+        #     x = self.se_block(x)
 
-        stacked = stacked.view(B_size, 3 * dim, H, W)  # [B, dim*3, H, W]
+        x = x.view(B, self.conv_channels, H * W)  # [B, conv_channels, N]
+        # x = x.view(B, self.dim, H * W)  # [B, conv_channels, N]
 
-        conv_out = self.conv_block(stacked)  # [B, conv_channels, H, W]
+        x = x.permute(0, 2, 1).contiguous()  # [B, N, conv_channels]
 
-        if self.use_se:
-            conv_out = self.se_block(conv_out)  # [B, conv_channels, H, W]
+        x = self.linear(x)  # [B, N, dim]
 
-        conv_out = conv_out.view(B_size, self.conv_channels, H * W)  # [B, conv_channels, N]
-
-        conv_out = conv_out.permute(0, 2, 1).contiguous()  # [B, N, conv_channels]
-
-        output = self.linear(conv_out)  # [B, N, dim]
-
-        return output
+        return x
 
 
 def square_pad(n_bag_features):
@@ -367,9 +411,9 @@ def square_pad(n_bag_features):
     return n_bag_features, _H, _W
 
 
-class CoCoFusionX(nn.Module):
+class CoCoFusionXX(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, backbone_dim, dropout_rate=0.4, n_classes=4):
-        super(CoCoFusionX, self).__init__()
+        super(CoCoFusionXX, self).__init__()
 
         self.backbone_dim = backbone_dim
         self.embed_dim = embed_dim

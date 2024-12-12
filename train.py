@@ -13,6 +13,7 @@ from models.AMIL import AMIL
 from models.CoCoFusion import CoCoFusion
 from models.CoCoFusionConcat import CoCoFusionConcat
 from models.CoCoFusionX import CoCoFusionX
+from models.CoCoFusionXX import CoCoFusionXX
 from models.DSMIL import DSMIL
 from models.SCMIL import SCMIL
 from models.TransMIL import TransMIL
@@ -47,6 +48,14 @@ def build_model(opts):
         )
     elif opts.model_name == "CoCoFusionX":
         model = CoCoFusionX(
+            embed_dim=opts.embed_dim,
+            num_heads=opts.num_heads,
+            num_layers=opts.num_attn_layers,
+            backbone_dim=opts.backbone_dim,
+            n_classes=opts.n_classes,
+        )
+    elif opts.model_name == "CoCoFusionXX":
+        model = CoCoFusionXX(
             embed_dim=opts.embed_dim,
             num_heads=opts.num_heads,
             num_layers=opts.num_attn_layers,

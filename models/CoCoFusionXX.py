@@ -68,17 +68,12 @@ class CrossAttention(nn.Module):
         x = x + self.scale_embeddings.repeat(B, N, 1)
         context = context + self.scale_embeddings.repeat(B, M, 1)
 
-        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
-        k = self.k_proj(context).view(B, M, self.num_heads, self.head_dim).transpose(1, 2)
-        v = self.v_proj(context).view(B, M, self.num_heads, self.head_dim).transpose(1, 2)
-
-        q = q.reshape(B * self.num_heads, N, self.head_dim)
-        k = k.reshape(B * self.num_heads, M, self.head_dim)
-        v = v.reshape(B * self.num_heads, M, self.head_dim)
+        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim)
+        k = self.k_proj(context).view(B, M, self.num_heads, self.head_dim)
+        v = self.v_proj(context).view(B, M, self.num_heads, self.head_dim)
 
         attn_output = memory_efficient_attention(q, k, v, p=self.attn_dropout.p)
 
-        attn_output = attn_output.view(B, self.num_heads, N, self.head_dim).transpose(1, 2)
         attn_output = attn_output.reshape(B, N, C)
 
         x = self.out_proj(attn_output)
@@ -132,17 +127,12 @@ class MultiHeadAttention(nn.Module):
     def forward(self, x):
         B, N, C = x.size()
 
-        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
-        k = self.k_proj(x).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
-        v = self.v_proj(x).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
-
-        q = q.reshape(B * self.num_heads, N, self.head_dim)
-        k = k.reshape(B * self.num_heads, N, self.head_dim)
-        v = v.reshape(B * self.num_heads, N, self.head_dim)
+        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim)
+        k = self.k_proj(x).view(B, N, self.num_heads, self.head_dim)
+        v = self.v_proj(x).view(B, N, self.num_heads, self.head_dim)
 
         attn_output = memory_efficient_attention(q, k, v, p=self.attn_dropout.p)
 
-        attn_output = attn_output.view(B, self.num_heads, N, self.head_dim).transpose(1, 2)
         attn_output = attn_output.reshape(B, N, C)
 
         return self.out_proj(attn_output)

@@ -73,8 +73,8 @@ backbone_dim=2048
 
 # model_name="CoCoFusion"
 # model_name="CoCoFusionX"
-model_name="CoCoFusionXX"
-# model_name="CoCoFusionConcat"
+# model_name="CoCoFusionXX"
+model_name="CoCoFusionConcat"
 # model_name="AMIL"
 # model_name="DSMIL"
 # model_name="TransMIL"
@@ -91,11 +91,11 @@ random_seed=7
 num_epochs=100
 warmup_epochs=5
 continue_training=0
-es_patience=30
-# es_patience=10
+# es_patience=30
+es_patience=15
 
-learning_rate=3e-4
-# learning_rate=3e-5
+# learning_rate=3e-4
+learning_rate=6e-5
 weight_decay=4e-6
 # weight_decay=1e-5
 lr_decay=0.5

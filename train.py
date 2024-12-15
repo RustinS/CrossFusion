@@ -81,7 +81,7 @@ def build_model(opts):
     elif opts.model_name == "SCMIL":
         model = SCMIL(input_size=opts.backbone_dim, n_classes=opts.n_classes, hidden_size=opts.embed_dim)
 
-    model = model.to("cuda:0")
+    model = model.to("cuda:0").to(torch.bfloat16)
     model = torch.nn.DataParallel(model)
 
     # print_network(model)
@@ -173,18 +173,18 @@ def train_single_epoch(
     pbar = create_pbar("train", len(loader))
 
     for batch_idx, batch in enumerate(loader):
-        x20_patches = batch["x20_patches"].to(device)
-        x10_patches = batch["x10_patches"].to(device)
-        x5_patches = batch["x5_patches"].to(device)
+        x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
+        x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
+        x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
         label = batch["label"].long().to(device)
         event_time = batch["event_time"].float()
         censorship = batch["censorship"].to(device)
 
-        with torch.amp.autocast("cuda", dtype=torch.float32):
-            hazards, S, Y_hat, logits, _ = model(x5_patches, x10_patches, x20_patches)
-            loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
-            loss_value = loss.item()
-            loss = loss / grad_accum_steps
+        # with torch.amp.autocast("cuda", dtype=torch.float32):
+        hazards, S, Y_hat, logits, _ = model(x5_patches, x10_patches, x20_patches)
+        loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
+        loss_value = loss.item()
+        loss = loss / grad_accum_steps
 
         risk = -torch.sum(S.float(), dim=1).detach().cpu().numpy()
         all_risk_scores[batch_idx] = risk.item()
@@ -197,13 +197,13 @@ def train_single_epoch(
 
         pbar.update()
 
-        scaler.scale(loss).backward()
-        # loss.backward()
+        # scaler.scale(loss).backward()
+        loss.backward()
 
         if (batch_idx + 1) % grad_accum_steps == 0:
-            scaler.step(optimizer)
-            scaler.update()
-            # optimizer.step()
+            # scaler.step(optimizer)
+            # scaler.update()
+            optimizer.step()
             optimizer.zero_grad()
 
     pbar.close()
@@ -236,14 +236,15 @@ def validate_single_epoch(
 
     pbar = create_pbar("val", len(loader))
     for batch_idx, batch in enumerate(loader):
-        x20_patches = batch["x20_patches"].to(device)
-        x10_patches = batch["x10_patches"].to(device)
-        x5_patches = batch["x5_patches"].to(device)
+        x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
+        x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
+        x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
         label = batch["label"].long().to(device)
         event_time = batch["event_time"]
         censorship = batch["censorship"].to(device)
 
-        with torch.no_grad(), torch.autocast(device_type='cuda', dtype=torch.float32):
+        # with torch.no_grad(), torch.autocast(device_type='cuda', dtype=torch.float32):
+        with torch.no_grad():
             hazards, S, Y_hat, _, _ = model(x5_patches, x10_patches, x20_patches)
 
             loss = loss_fn(hazards=hazards.float(), S=S.float(), Y=label, c=censorship, alpha=0)

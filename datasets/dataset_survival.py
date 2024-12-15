@@ -32,7 +32,8 @@ class GenericWSISurvivalDataset(Dataset):
 
         self.pt_folders = {}
         for mag_level in args.magnifications:
-            self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"{mag_level}x")
+            # self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"{mag_level}x")
+            self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"x{mag_level}", "pt_files")
 
         slide_data = self.prep_slide_data(clinical_path, args)
 
@@ -121,8 +122,6 @@ class GenericWSISurvivalDataset(Dataset):
 
         slide_data = slide_data[slide_data["slide_id"].isin(present_names)]
 
-        if "IDC" in slide_data["oncotree_code"]:
-            slide_data = slide_data[slide_data["oncotree_code"] == "IDC"]
         return slide_data
 
     def cls_ids_prep(self):

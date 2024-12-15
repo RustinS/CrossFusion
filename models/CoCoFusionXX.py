@@ -402,7 +402,7 @@ def square_pad(n_bag_features):
 
 
 class CoCoFusionXX(nn.Module):
-    def __init__(self, embed_dim, num_heads, num_layers, backbone_dim, dropout_rate=0.4, n_classes=4):
+    def __init__(self, embed_dim, num_heads, num_layers, backbone_dim, dropout_rate=0.3, n_classes=4):
         super(CoCoFusionXX, self).__init__()
 
         self.backbone_dim = backbone_dim

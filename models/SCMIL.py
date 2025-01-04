@@ -213,7 +213,7 @@ class SCMIL(nn.Module):
         self.use_filter_branch = use_filter_branch
 
         if self.with_softfilter:
-            self.softfilter = SoftFilterLayer(dim=input_size, hidden_size=256, deep=1)
+            self.softfilter = SoftFilterLayer(dim=input_size, hidden_size=hidden_size, deep=1)
 
         if hidden_size == None:
             hidden_size = input_size
@@ -231,7 +231,7 @@ class SCMIL(nn.Module):
                     )
                 )
             self.attens = nn.Sequential(*layers)
-        self.amil = AMIL_layer(hidden_size, 256, dropout=dropout_rate)
+        self.amil = AMIL_layer(hidden_size, hidden_size, dropout=dropout_rate)
         if not self.as_backbone:
             self.classifier = nn.Linear(hidden_size, n_classes)
 

@@ -24,13 +24,13 @@
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COADREAD/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 
-dataset_name=COAD
-clinical_path="./data/tcga_coad_all_clean2.csv"
-csv_path="./data/TCGA-Manifests/gdc_manifest_COAD.csv"
-splits_path="./data/splits/tcga_coad"
-img_dir="/projects/patho5nobackup/TCGA/Survival_Data/COAD/patches_clam"
-pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COAD/features_clam"
-save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
+# dataset_name=COAD
+# clinical_path="./data/tcga_coad_all_clean2.csv"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_COAD.csv"
+# splits_path="./data/splits/tcga_coad"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/COAD/patches_clam"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/COAD/features_clam"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 
 # dataset_name=LUAD
 # clinical_path="./data/tcga_luad_all_clean.csv.zip"
@@ -56,6 +56,9 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BLCA/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/BLCA"
 
+
+# GBMLGG
+
 # dataset_name=GBMLGG
 # clinical_path="./data/tcga_gbmlgg_all_clean.csv.zip"
 # csv_path="./data/TCGA-Manifests/gdc_manifest_GBMLGG.csv"
@@ -63,6 +66,16 @@ save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/COADREAD"
 # img_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Patches"
 # pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/Features"
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
+
+dataset_name=GBMLGG
+clinical_path="./data/tcga_gbmlgg_all_clean2.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_GBMLGG.csv"
+splits_path="./data/splits/tcga_gbmlgg"
+img_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/patches_clam"
+pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/GBMLGG/features_clam"
+save_dir="/projects/patho5nobackup/TCGA/Trained-Models/MsCoConv/GBMLGG"
+
+
 
 backbone="resnet50"
 backbone_dim=2048
@@ -82,11 +95,13 @@ backbone_dim=2048
 # model_name="CoCoFusion"
 # model_name="CoCoFusionX"
 # model_name="CoCoFusionXX"
+
 # model_name="CoCoFusionConcat"
-model_name="AMIL"
+
+# model_name="AMIL"
 # model_name="DSMIL"
 # model_name="TransMIL"
-# model_name="SCMIL"
+model_name="SCMIL"
 
 magnifications="5 10 20"
 data_workers=16
@@ -99,11 +114,14 @@ random_seed=7
 num_epochs=100
 warmup_epochs=5
 continue_training=0
-es_patience=20
-# es_patience=15
+# es_patience=40
+es_patience=15
 
-# learning_rate=1e-4
-learning_rate=5e-4
+learning_rate=1e-4
+# learning_rate=8e-5
+
+# learning_rate=3e-4
+
 weight_decay=4e-6
 # weight_decay=1e-5
 lr_decay=0.5

@@ -301,7 +301,7 @@ if __name__ == "__main__":
         datasets = (train_dataset, val_dataset)
 
         best_val_cindex, best_val_epoch = train(datasets, fold_idx, args)
-        best_val_cindex_list.append(round(best_val_cindex, 3))
+        best_val_cindex_list.append(round(float(best_val_cindex), 3))
         best_val_epoch_list.append(best_val_epoch)
         print_log_message(f"Best Val C-Index List: {best_val_cindex_list} - Current Best Val Epoch List: {best_val_epoch_list}")
 

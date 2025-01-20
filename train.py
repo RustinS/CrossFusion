@@ -81,7 +81,8 @@ def build_model(opts):
     elif opts.model_name == "SCMIL":
         model = SCMIL(input_size=opts.backbone_dim, n_classes=opts.n_classes, hidden_size=opts.embed_dim)
 
-    model = model.to("cuda:0").to(torch.bfloat16)
+    # model = model.to("cuda:0").to(torch.bfloat16)
+    model = model.to("cuda:0")
     model = torch.nn.DataParallel(model)
 
     # print_network(model)
@@ -119,7 +120,8 @@ def train(datasets: tuple, fold_idx: int, opts: Namespace):
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), lr=opts.learning_rate, weight_decay=opts.weight_decay
     )
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.num_epochs // 5, gamma=0.5)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.num_epochs // 5, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=opts.learning_rate//10, last_epoch=-1)
 
     print_log_message("Init Loaders...")
     train_loader = get_split_loader(
@@ -167,15 +169,22 @@ def train_single_epoch(
     model.train()
     train_loss = 0.0
 
+    print_log_message(f"Current LR: {scheduler.get_last_lr()[0]}")
+
     all_risk_scores = np.zeros((len(loader)))
     all_censorships = np.zeros((len(loader)))
     all_event_times = np.zeros((len(loader)))
     pbar = create_pbar("train", len(loader))
 
     for batch_idx, batch in enumerate(loader):
-        x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
-        x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
-        x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+        # x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
+        # x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
+        # x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+
+        x20_patches = batch["x20_patches"].to(device)
+        x10_patches = batch["x10_patches"].to(device)
+        x5_patches = batch["x5_patches"].to(device)
+
         label = batch["label"].long().to(device)
         event_time = batch["event_time"].float()
         censorship = batch["censorship"].to(device)
@@ -236,9 +245,14 @@ def validate_single_epoch(
 
     pbar = create_pbar("val", len(loader))
     for batch_idx, batch in enumerate(loader):
-        x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
-        x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
-        x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+        # x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
+        # x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
+        # x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+
+        x20_patches = batch["x20_patches"].to(device)
+        x10_patches = batch["x10_patches"].to(device)
+        x5_patches = batch["x5_patches"].to(device)
+        
         label = batch["label"].long().to(device)
         event_time = batch["event_time"]
         censorship = batch["censorship"].to(device)

@@ -6,7 +6,6 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange, reduce, repeat
 from torch import einsum, nn
-from xformers.ops import memory_efficient_attention
 
 
 class PPEG(nn.Module):
@@ -68,13 +67,13 @@ class CrossAttention(nn.Module):
         x = x + self.scale_embeddings.repeat(B, N, 1)
         context = context + self.scale_embeddings.repeat(B, M, 1)
 
-        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim)
-        k = self.k_proj(context).view(B, M, self.num_heads, self.head_dim)
-        v = self.v_proj(context).view(B, M, self.num_heads, self.head_dim)
+        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        k = self.k_proj(context).view(B, M, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        v = self.v_proj(context).view(B, M, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
 
-        attn_output = memory_efficient_attention(q, k, v, p=self.attn_dropout.p)
+        attn_output = F.scaled_dot_product_attention(q, k, v, dropout_p=self.attn_dropout.p)
 
-        attn_output = attn_output.reshape(B, N, C)
+        attn_output = attn_output.transpose(1, 2).contiguous().view(B, N, C)
 
         x = self.out_proj(attn_output)
         x = self.proj_dropout(x)
@@ -127,13 +126,12 @@ class MultiHeadAttention(nn.Module):
     def forward(self, x):
         B, N, C = x.size()
 
-        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim)
-        k = self.k_proj(x).view(B, N, self.num_heads, self.head_dim)
-        v = self.v_proj(x).view(B, N, self.num_heads, self.head_dim)
+        q = self.q_proj(x).view(B, N, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        k = self.k_proj(x).view(B, N, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        v = self.v_proj(x).view(B, N, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        attn_output = F.scaled_dot_product_attention(q, k, v, dropout_p=self.attn_dropout.p)
 
-        attn_output = memory_efficient_attention(q, k, v, p=self.attn_dropout.p)
-
-        attn_output = attn_output.reshape(B, N, C)
+        attn_output = attn_output.transpose(1, 2).contiguous().view(B, N, C)
 
         return self.out_proj(attn_output)
 

@@ -1,8 +1,6 @@
-import json
 import os
 import traceback
 from argparse import Namespace
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -10,12 +8,10 @@ from sksurv.metrics import concordance_index_censored
 
 from datasets.dataset_survival import GenericMILSurvivalDataset
 from models.AMIL import AMIL
-from models.CoCoFusion import CoCoFusion
-from models.CoCoFusionConcat import CoCoFusionConcat
-from models.CoCoFusionX import CoCoFusionX
-from models.CoCoFusionXX import CoCoFusionXX
+from models.CrossFusion import CrossFusion
+from models.CrossFusionConcat import CrossFusionConcat
+from models.CrossFusionSingle import CrossFusionSingle
 from models.DSMIL import DSMIL
-from models.SCMIL import SCMIL
 from models.TransMIL import TransMIL
 from utils.data_utils import get_split_loader
 from utils.general_utils import create_pbar, get_training_args, set_random_seed
@@ -26,36 +22,27 @@ from utils.train_utils import (
     NLLSurvLoss,
     print_network,
 )
-from utils.valid_utils import print_val_info_str
 
 
 def build_model(opts):
-    if opts.model_name == "CoCoFusion":
-        model = CoCoFusion(
+    if opts.model_name == "CrossFusion":
+        model = CrossFusion(
             embed_dim=opts.embed_dim,
             num_heads=opts.num_heads,
             num_layers=opts.num_attn_layers,
             backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
-    elif opts.model_name == "CoCoFusionConcat":
-        model = CoCoFusionConcat(
+    elif opts.model_name == "CrossFusionConcat":
+        model = CrossFusionConcat(
             embed_dim=opts.embed_dim,
             num_heads=opts.num_heads,
             num_layers=opts.num_attn_layers,
             backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
-    elif opts.model_name == "CoCoFusionX":
-        model = CoCoFusionX(
-            embed_dim=opts.embed_dim,
-            num_heads=opts.num_heads,
-            num_layers=opts.num_attn_layers,
-            backbone_dim=opts.backbone_dim,
-            n_classes=opts.n_classes,
-        )
-    elif opts.model_name == "CoCoFusionXX":
-        model = CoCoFusionXX(
+    elif opts.model_name == "CrossFusionSingle":
+        model = CrossFusionSingle(
             embed_dim=opts.embed_dim,
             num_heads=opts.num_heads,
             num_layers=opts.num_attn_layers,
@@ -78,16 +65,14 @@ def build_model(opts):
             backbone_dim=opts.backbone_dim,
             n_classes=opts.n_classes,
         )
-    elif opts.model_name == "SCMIL":
-        model = SCMIL(input_size=opts.backbone_dim, n_classes=opts.n_classes, hidden_size=opts.embed_dim)
 
-    # model = model.to("cuda:0").to(torch.bfloat16)
-    model = model.to("cuda:0")
+    model = model.cuda()
     model = torch.nn.DataParallel(model)
 
     # print_network(model)
 
     return model
+
 
 def build_loss_fn(opts):
     if opts.loss_fn == "ce_surv":
@@ -104,24 +89,28 @@ def build_loss_fn(opts):
 def train(datasets: tuple, fold_idx: int, opts: Namespace):
     print_log_message(f"Training Fold {fold_idx}", empty_line=True)
 
+    split_save_dir = os.path.join(opts.save_dir, opts.model_name, opts.backbone, f"fold_{fold_idx}")
+    if not os.path.exists(split_save_dir):
+        os.makedirs(split_save_dir)
+
     train_split, val_split = datasets
     print_info_message("Training on {} samples".format(len(train_split)))
     print_info_message("Validating on {} samples".format(len(val_split)))
 
     print_log_message("Init loss function...", empty_line=True)
     loss_fn = build_loss_fn(opts)
-    scaler = torch.amp.GradScaler("cuda")
 
     print_log_message("Init Model...")
     opts.n_classes = 4
     model = build_model(opts)
+    dtype = torch.float16 if opts.bfloat16 else torch.float32
 
     print_log_message("Init optimizer ...")
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), lr=opts.learning_rate, weight_decay=opts.weight_decay
     )
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opts.num_epochs // 5, gamma=0.5)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=opts.learning_rate//10, last_epoch=-1)
+
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=opts.learning_rate // 10, last_epoch=-1)
 
     print_log_message("Init Loaders...")
     train_loader = get_split_loader(
@@ -139,14 +128,16 @@ def train(datasets: tuple, fold_idx: int, opts: Namespace):
     try:
         for epoch in range(opts.num_epochs):
             print_log_message(f"Epoch {epoch}:", empty_line=True)
-            train_single_epoch(model, train_loader, optimizer, loss_fn, scheduler, opts.grad_accum_steps, scaler)
+            train_single_epoch(model, train_loader, optimizer, loss_fn, scheduler, opts.grad_accum_steps, dtype)
 
-            val_c_index = validate_single_epoch(model, val_loader, loss_fn)
+            val_c_index = validate_single_epoch(model, val_loader, loss_fn, dtype)
 
             if val_c_index > best_val_cindex and epoch > opts.warmup_epochs - 1:
                 best_val_epoch = epoch
                 best_val_cindex = val_c_index
                 print_log_message("New Best Val C-Index ...")
+                model.module.save(os.path.join(split_save_dir, "best_model.pt"))
+                print_log_message("Saved the model.")
             else:
                 print_log_message(f"No importvement in Val C-Index ({epoch - best_val_epoch}/{es_patience}) ...")
                 if epoch - best_val_epoch >= es_patience:
@@ -162,9 +153,7 @@ def train(datasets: tuple, fold_idx: int, opts: Namespace):
     return best_val_cindex, best_val_epoch
 
 
-def train_single_epoch(
-    model, loader, optimizer, loss_fn, scheduler, grad_accum_steps, scaler
-):
+def train_single_epoch(model, loader, optimizer, loss_fn, scheduler, grad_accum_steps, dtype):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
     train_loss = 0.0
@@ -177,64 +166,51 @@ def train_single_epoch(
     pbar = create_pbar("train", len(loader))
 
     for batch_idx, batch in enumerate(loader):
-        # x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
-        # x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
-        # x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+        with torch.amp.autocast('cuda', dtype=dtype):
+            x20_patches = batch["x20_patches"].to(device)
+            x10_patches = batch["x10_patches"].to(device)
+            x5_patches = batch["x5_patches"].to(device)
 
-        x20_patches = batch["x20_patches"].to(device)
-        x10_patches = batch["x10_patches"].to(device)
-        x5_patches = batch["x5_patches"].to(device)
+            label = batch["label"].long().to(device)
+            event_time = batch["event_time"].float()
+            censorship = batch["censorship"].to(device)
 
-        label = batch["label"].long().to(device)
-        event_time = batch["event_time"].float()
-        censorship = batch["censorship"].to(device)
+            hazards, S, Y_hat, logits, _ = model(x5_patches, x10_patches, x20_patches)
+            loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
+            loss_value = loss.item()
+            loss = loss / grad_accum_steps
 
-        # with torch.amp.autocast("cuda", dtype=torch.float32):
-        hazards, S, Y_hat, logits, _ = model(x5_patches, x10_patches, x20_patches)
-        loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
-        loss_value = loss.item()
-        loss = loss / grad_accum_steps
+            risk = -torch.sum(S.float(), dim=1).detach().cpu().numpy()
+            all_risk_scores[batch_idx] = risk.item()
+            all_censorships[batch_idx] = censorship.cpu().numpy().item()
+            all_event_times[batch_idx] = event_time
 
-        risk = -torch.sum(S.float(), dim=1).detach().cpu().numpy()
-        all_risk_scores[batch_idx] = risk.item()
-        all_censorships[batch_idx] = censorship.cpu().numpy().item()
-        all_event_times[batch_idx] = event_time
+            train_loss += loss_value
 
-        train_loss += loss_value
+            pbar.postfix[1]["loss"] = train_loss / (batch_idx + 1)
 
-        pbar.postfix[1]["loss"] = train_loss / (batch_idx + 1)
+            loss.backward()
 
+            if (batch_idx + 1) % grad_accum_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
         pbar.update()
-
-        # scaler.scale(loss).backward()
-        loss.backward()
-
-        if (batch_idx + 1) % grad_accum_steps == 0:
-            # scaler.step(optimizer)
-            # scaler.update()
-            optimizer.step()
-            optimizer.zero_grad()
 
     pbar.close()
     scheduler.step()
 
     train_loss /= len(loader)
 
-    c_index = concordance_index_censored(
-        (1 - all_censorships).astype(bool), all_event_times, all_risk_scores, tied_tol=1e-08
-    )[0]
+    c_index = concordance_index_censored((1 - all_censorships).astype(bool), all_event_times, all_risk_scores, tied_tol=1e-08)[0]
 
-    print_log_message(
-        "Train Loss: {:.3f} - Train C-Index: {:.3f}".format(
-            train_loss, c_index
-        )
-    )
+    print_log_message("Train Loss: {:.3f} - Train C-Index: {:.3f}".format(train_loss, c_index))
 
 
 def validate_single_epoch(
     model,
     loader,
     loss_fn=None,
+    dtype=False,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
@@ -245,45 +221,35 @@ def validate_single_epoch(
 
     pbar = create_pbar("val", len(loader))
     for batch_idx, batch in enumerate(loader):
-        # x20_patches = batch["x20_patches"].to(device).to(torch.bfloat16)
-        # x10_patches = batch["x10_patches"].to(device).to(torch.bfloat16)
-        # x5_patches = batch["x5_patches"].to(device).to(torch.bfloat16)
+        with torch.amp.autocast('cuda', dtype=dtype):
+            x20_patches = batch["x20_patches"].to(device)
+            x10_patches = batch["x10_patches"].to(device)
+            x5_patches = batch["x5_patches"].to(device)
 
-        x20_patches = batch["x20_patches"].to(device)
-        x10_patches = batch["x10_patches"].to(device)
-        x5_patches = batch["x5_patches"].to(device)
-        
-        label = batch["label"].long().to(device)
-        event_time = batch["event_time"]
-        censorship = batch["censorship"].to(device)
+            label = batch["label"].long().to(device)
+            event_time = batch["event_time"]
+            censorship = batch["censorship"].to(device)
 
-        # with torch.no_grad(), torch.autocast(device_type='cuda', dtype=torch.float32):
-        with torch.no_grad():
-            hazards, S, Y_hat, _, _ = model(x5_patches, x10_patches, x20_patches)
+            with torch.no_grad():
+                hazards, S, Y_hat, _, _ = model(x5_patches, x10_patches, x20_patches)
 
-            loss = loss_fn(hazards=hazards.float(), S=S.float(), Y=label, c=censorship, alpha=0)
-            loss_value = loss.item()
+                loss = loss_fn(hazards=hazards.float(), S=S.float(), Y=label, c=censorship, alpha=0)
+                loss_value = loss.item()
 
-        risk = -torch.sum(S.float(), dim=1).cpu().numpy()
-        all_risk_scores[batch_idx] = risk.item()
-        all_censorships[batch_idx] = censorship.cpu().numpy().item()
-        all_event_times[batch_idx] = event_time
+            risk = -torch.sum(S.float(), dim=1).cpu().numpy()
+            all_risk_scores[batch_idx] = risk.item()
+            all_censorships[batch_idx] = censorship.cpu().numpy().item()
+            all_event_times[batch_idx] = event_time
 
-        val_loss += loss_value
+            val_loss += loss_value
 
         pbar.update()
     pbar.close()
 
     val_loss /= len(loader)
-    c_index = concordance_index_censored(
-        (1 - all_censorships).astype(bool), all_event_times, all_risk_scores, tied_tol=1e-08
-    )[0]
+    c_index = concordance_index_censored((1 - all_censorships).astype(bool), all_event_times, all_risk_scores, tied_tol=1e-08)[0]
 
-    print_log_message(
-        "Val Loss: {:.3f} - Val C-Index: {:.3f}".format(
-            val_loss, c_index
-        )
-    )
+    print_log_message("Val Loss: {:.3f} - Val C-Index: {:.3f}".format(val_loss, c_index))
 
     return c_index
 
@@ -322,4 +288,7 @@ if __name__ == "__main__":
     best_val_cindex_list = np.array(best_val_cindex_list)
     mean_c_index = np.mean(best_val_cindex_list)
     std_c_index = np.std(best_val_cindex_list)
-    print_log_message(f"TCGA-{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}", empty_line=True)
+    print_log_message(
+        f"TCGA-{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}",
+        empty_line=True,
+    )

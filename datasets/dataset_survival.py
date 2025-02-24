@@ -1,14 +1,13 @@
 from __future__ import division, print_function
 
 import os
-import pickle
 
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from utils.print_utils import print_error_message, print_info_message, print_log_message
+from utils.print_utils import print_error_message, print_info_message
 
 
 class GenericWSISurvivalDataset(Dataset):
@@ -32,7 +31,6 @@ class GenericWSISurvivalDataset(Dataset):
 
         self.pt_folders = {}
         for mag_level in args.magnifications:
-            # self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"{mag_level}x")
             self.pt_folders[f"x{mag_level}"] = os.path.join(args.pt_dir, args.backbone, f"x{mag_level}", "pt_files")
 
         slide_data = self.prep_slide_data(clinical_path, args)
@@ -104,10 +102,7 @@ class GenericWSISurvivalDataset(Dataset):
 
         info_df = pd.read_csv(info_csv_path, sep="\t")
         slide_data = pd.read_csv(clinical_path, index_col=0, low_memory=False)
-        # slide_data = slide_data.merge(info_df, left_on="case_id", right_on="Case ID", how="inner")
         slide_data = slide_data.merge(info_df, left_on="slide_id", right_on="filename", how="inner")
-
-        # slide_data["image_file_name"] = slide_data.apply(lambda row: f"{row['File Name'].split('.svs')[0]}", axis=1)
         slide_data["image_file_name"] = slide_data.apply(lambda row: f"{row['filename'].split('.svs')[0]}", axis=1).to_numpy()
 
         present_names = []
@@ -134,13 +129,13 @@ class GenericWSISurvivalDataset(Dataset):
             self.slide_cls_ids[i] = np.where(self.slide_data["label"] == i)[0]
 
     def patient_data_prep(self):
-        patients = np.unique(np.array(self.slide_data["case_id"]))  # get unique patients
+        patients = np.unique(np.array(self.slide_data["case_id"]))
         patient_labels = []
 
         for p in patients:
             locations = self.slide_data[self.slide_data["case_id"] == p].index.tolist()
             assert len(locations) > 0
-            label = self.slide_data["label"][locations[0]]  # get patient label
+            label = self.slide_data["label"][locations[0]]
             patient_labels.append(label)
 
         self.patient_data = {"case_id": patients, "label": np.array(patient_labels)}

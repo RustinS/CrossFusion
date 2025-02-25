@@ -20,7 +20,6 @@ from utils.train_utils import (
     CoxSurvLoss,
     CrossEntropySurvLoss,
     NLLSurvLoss,
-    print_network,
 )
 
 
@@ -68,8 +67,6 @@ def build_model(opts):
 
     model = model.cuda()
     model = torch.nn.DataParallel(model)
-
-    # print_network(model)
 
     return model
 
@@ -132,7 +129,7 @@ def train(datasets: tuple, fold_idx: int, opts: Namespace):
 
             val_c_index = validate_single_epoch(model, val_loader, loss_fn, dtype)
 
-            if val_c_index > best_val_cindex and epoch > opts.warmup_epochs - 1:
+            if val_c_index > best_val_cindex and epoch + 1 > opts.warmup_epochs:
                 best_val_epoch = epoch
                 best_val_cindex = val_c_index
                 print_log_message("New Best Val C-Index ...")
@@ -167,15 +164,15 @@ def train_single_epoch(model, loader, optimizer, loss_fn, scheduler, grad_accum_
 
     for batch_idx, batch in enumerate(loader):
         with torch.amp.autocast('cuda', dtype=dtype):
-            x20_patches = batch["x20_patches"].to(device)
-            x10_patches = batch["x10_patches"].to(device)
-            x5_patches = batch["x5_patches"].to(device)
+            x20 = batch["x20_patches"].to(device)
+            x10 = batch["x10_patches"].to(device)
+            x5 = batch["x5_patches"].to(device)
 
             label = batch["label"].long().to(device)
             event_time = batch["event_time"].float()
             censorship = batch["censorship"].to(device)
 
-            hazards, S, Y_hat, logits, _ = model(x5_patches, x10_patches, x20_patches)
+            hazards, S, _, _, _ = model(x5, x10, x20)
             loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
             loss_value = loss.item()
             loss = loss / grad_accum_steps
@@ -222,16 +219,16 @@ def validate_single_epoch(
     pbar = create_pbar("val", len(loader))
     for batch_idx, batch in enumerate(loader):
         with torch.amp.autocast('cuda', dtype=dtype):
-            x20_patches = batch["x20_patches"].to(device)
-            x10_patches = batch["x10_patches"].to(device)
-            x5_patches = batch["x5_patches"].to(device)
+            x20 = batch["x20_patches"].to(device)
+            x10 = batch["x10_patches"].to(device)
+            x5 = batch["x5_patches"].to(device)
 
             label = batch["label"].long().to(device)
             event_time = batch["event_time"]
             censorship = batch["censorship"].to(device)
 
             with torch.no_grad():
-                hazards, S, Y_hat, _, _ = model(x5_patches, x10_patches, x20_patches)
+                hazards, S, _, _, _ = model(x5, x10, x20)
 
                 loss = loss_fn(hazards=hazards.float(), S=S.float(), Y=label, c=censorship, alpha=0)
                 loss_value = loss.item()
@@ -286,9 +283,9 @@ if __name__ == "__main__":
         print_log_message(f"Best Val C-Index List: {best_val_cindex_list} - Current Best Val Epoch List: {best_val_epoch_list}")
 
     best_val_cindex_list = np.array(best_val_cindex_list)
-    mean_c_index = np.mean(best_val_cindex_list)
-    std_c_index = np.std(best_val_cindex_list)
+    mean_ci = np.mean(best_val_cindex_list)
+    std_ci = np.std(best_val_cindex_list)
     print_log_message(
-        f"TCGA-{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model Complete C-Index: {mean_c_index:.3f} +/- {std_c_index:.3f}",
+        f"{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model Complete C-Index: {mean_ci:.3f} +/- {std_ci:.3f}",
         empty_line=True,
     )

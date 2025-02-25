@@ -68,7 +68,7 @@ class CrossAttention(nn.Module):
         attn_output = attn_output.transpose(1, 2).contiguous().view(B, N, C)
 
         if attn_weights:
-            attn = (q @ k.transpose(-2, -1)) * (1.0 / (self.head_dim ** 0.5))
+            attn = (q @ k.transpose(-2, -1)) * (1.0 / (self.head_dim**0.5))
             attn_weights = F.softmax(attn, dim=-1)
             attn_weights = self.attn_dropout(attn_weights).detach()
         else:
@@ -133,7 +133,7 @@ class MultiHeadAttention(nn.Module):
         attn_output = attn_output.transpose(1, 2).contiguous().view(B, N, C)
 
         if attn_weights:
-            attn = (q @ k.transpose(-2, -1)) * (1.0 / (self.head_dim ** 0.5))
+            attn = (q @ k.transpose(-2, -1)) * (1.0 / (self.head_dim**0.5))
             attn_weights = F.softmax(attn, dim=-1)
             attn_weights = self.attn_dropout(attn_weights).detach()
         else:
@@ -167,10 +167,10 @@ class Block(nn.Module):
                 )
             )
 
-    def forward(self, x):
+    def forward(self, x, attn_weights=False):
         for norm_1, attn, norm_2, ff in self.layers:
             x = norm_1(x)
-            x_attn, attn_w = attn(x)
+            x_attn, attn_w = attn(x, attn_weights=attn_weights)
             x = x + x_attn
             x = norm_2(x)
             x = ff(x) + x
@@ -204,10 +204,10 @@ class Transformer(nn.Module):
 
         self.ppeg = PPEG(dim=dim, class_token=configs["class_token"])
 
-    def forward(self, x, _H=None, _W=None):
-        x, pre_attn_w = self.pre_layers(x)
+    def forward(self, x, _H=None, _W=None, attn_weights=False):
+        x, pre_attn_w = self.pre_layers(x, attn_weights=attn_weights)
         x = self.ppeg(x, _H, _W)
-        x, post_attn_w = self.post_layers(x)
+        x, post_attn_w = self.post_layers(x, attn_weights=attn_weights)
         return x, {"pre": pre_attn_w, "post": post_attn_w}
 
 
@@ -334,7 +334,7 @@ class CrossFusion(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, backbone_dim, dropout_rate=0.3, n_classes=4):
         super(CrossFusion, self).__init__()
 
-        self.atten_weights = False
+        self.attn_weights = False
         self.backbone_dim = backbone_dim
         self.embed_dim = embed_dim
         self.dropout_rate = dropout_rate
@@ -353,33 +353,33 @@ class CrossFusion(nn.Module):
         self.dropout_emb = nn.Dropout(self.dropout_rate)
 
         if self.backbone_dim == self.embed_dim:
-            self.coarse_pre_cross_attn = nn.Identity()
-            self.source_pre_cross_attn = nn.Identity()
-            self.fine_pre_cross_attn = nn.Identity()
+            self.c_lin_proj = nn.Identity()
+            self.s_lin_proj = nn.Identity()
+            self.f_lin_proj = nn.Identity()
         else:
-            self.coarse_pre_cross_attn = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
-            self.source_pre_cross_attn = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
-            self.fine_pre_cross_attn = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
+            self.c_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
+            self.s_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
+            self.f_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
 
-        self.fine_cross_attn = CrossAttention(
+        self.f_cross_attn = CrossAttention(
             self.embed_dim,
             num_heads=self.num_heads,
             qkv_bias=True,
             attn_drop=self.cross_attn_dropout,
             proj_drop=self.cross_attn_proj_dropout,
         )
-        self.fine_cross_attn_ln = nn.LayerNorm(self.embed_dim)
-        self.fine_cross_attn_ffn = FeedForward({"dim": self.embed_dim, "mlp_ratio": self.mlp_ratio, "ffn_drop_rate": self.dropout_rate})
+        self.f_cross_attn_ln = nn.LayerNorm(self.embed_dim)
+        self.f_cross_attn_ffn = FeedForward({"dim": self.embed_dim, "mlp_ratio": self.mlp_ratio, "ffn_drop_rate": self.dropout_rate})
 
-        self.coarse_cross_attn = CrossAttention(
+        self.c_cross_attn = CrossAttention(
             self.embed_dim,
             num_heads=self.num_heads,
             qkv_bias=True,
             attn_drop=self.cross_attn_dropout,
             proj_drop=self.cross_attn_proj_dropout,
         )
-        self.coarse_cross_attn_ln = nn.LayerNorm(self.embed_dim)
-        self.coarse_cross_attn_ffn = FeedForward({"dim": self.embed_dim, "mlp_ratio": self.mlp_ratio, "ffn_drop_rate": self.dropout_rate})
+        self.c_cross_attn_ln = nn.LayerNorm(self.embed_dim)
+        self.c_cross_attn_ffn = FeedForward({"dim": self.embed_dim, "mlp_ratio": self.mlp_ratio, "ffn_drop_rate": self.dropout_rate})
 
         transformer_configs = {
             "num_layers": num_layers,
@@ -394,14 +394,14 @@ class CrossFusion(nn.Module):
             "ffn_drop_rate": self.dropout_rate,
         }
 
-        self.coarse_transformer = Transformer(transformer_configs)
-        self.coarse_ln = nn.LayerNorm(self.embed_dim)
+        self.c_transformer = Transformer(transformer_configs)
+        self.c_transformer_ln = nn.LayerNorm(self.embed_dim)
 
-        self.fine_transformer = Transformer(transformer_configs)
-        self.fine_ln = nn.LayerNorm(self.embed_dim)
+        self.f_transformer = Transformer(transformer_configs)
+        self.f_transformer_ln = nn.LayerNorm(self.embed_dim)
 
-        self.source_transformer = Transformer(transformer_configs)
-        self.source_ln = nn.LayerNorm(self.embed_dim)
+        self.s_transformer = Transformer(transformer_configs)
+        self.s_transformer_ln = nn.LayerNorm(self.embed_dim)
 
         transformer_configs["class_token"] = True
 
@@ -425,72 +425,86 @@ class CrossFusion(nn.Module):
         self.load_state_dict(state_dict)
 
     @staticmethod
-    def apply_cross_attn(x, context, cross_attn, cross_attn_ln, cross_attn_ffn):
-        x_cross, cross_attn_w = cross_attn(x=x, context=context)
+    def apply_cab(x, context, cross_attn, cross_attn_ln, cross_attn_ffn, attn_weights=False):
+        x_cross, cross_attn_w = cross_attn(x=x, context=context, attn_weights=attn_weights)
         x_cross = x + x_cross
         x_cross = cross_attn_ln(x_cross)
         x_cross = x_cross + cross_attn_ffn(x_cross)
         return x_cross, cross_attn_w
 
     @staticmethod
-    def apply_pad_transformer(x, transfomer_block, norm_layer):
+    def apply_pt(x, transfomer_block, norm_layer, attn_weights=False):
         x, _H, _W = square_pad(x)
-        x, attn_w = transfomer_block(x, _H, _W)
+        x, attn_w = transfomer_block(x, _H, _W, attn_weights=attn_weights)
         x = norm_layer(x)
         return x, _H, _W, attn_w
 
-    def forward(self, x5_patch_features, x10_patch_features, x20_patch_features, attn_weights=False):
-        self.atten_weights = attn_weights
-        attention_scores = {}
-        b, _, _ = x10_patch_features.shape
+    def forward(self, x5, x10, x20, attn_weights=False):
+        self.attn_weights = attn_weights
+        attn_scores = {}
+        b, _, _ = x10.shape
 
-        x_coarse = self.coarse_pre_cross_attn(x5_patch_features)
-        x_source = self.source_pre_cross_attn(x10_patch_features)
-        x_fine = self.fine_pre_cross_attn(x20_patch_features)
+        x_c = self.c_lin_proj(x5)
+        x_s = self.s_lin_proj(x10)
+        x_f = self.f_lin_proj(x20)
 
         # Coarse
-        x_coarse_co, coarse_cross_attn_w = self.apply_cross_attn(
-            x_source, x_coarse, self.coarse_cross_attn, self.coarse_cross_attn_ln, self.coarse_cross_attn_ffn
+        x_c, coarse_cross_attn_w = self.apply_cab(
+            x=x_s,
+            context=x_c,
+            cross_attn=self.c_cross_attn,
+            cross_attn_ln=self.c_cross_attn_ln,
+            cross_attn_ffn=self.c_cross_attn_ffn,
+            attn_weights=attn_weights,
         )
-        x_coarse_co, _H, _W, coarse_pt_attn_w = self.apply_pad_transformer(x_coarse_co, self.coarse_transformer, self.coarse_ln)
+        x_c, _H, _W, coarse_pt_attn_w = self.apply_pt(
+            x=x_c, transfomer_block=self.c_transformer, norm_layer=self.c_transformer_ln, attn_weights=attn_weights
+        )
 
-        attention_scores["coarse_cross_attn_w"] = coarse_cross_attn_w
-        attention_scores["coarse_pt_attn_w"] = coarse_pt_attn_w
+        attn_scores["coarse_cross_attn_w"] = coarse_cross_attn_w
+        attn_scores["coarse_pt_attn_w"] = coarse_pt_attn_w
 
         # Fine
-        x_fine_co, fine_cross_attn_w = self.apply_cross_attn(
-            x_source, x_fine, self.fine_cross_attn, self.fine_cross_attn_ln, self.fine_cross_attn_ffn
+        x_f, fine_cross_attn_w = self.apply_cab(
+            x=x_s,
+            context=x_f,
+            cross_attn=self.f_cross_attn,
+            cross_attn_ln=self.f_cross_attn_ln,
+            cross_attn_ffn=self.f_cross_attn_ffn,
+            attn_weights=attn_weights,
         )
-        x_fine_co, _H, _W, fine_pt_attn_w = self.apply_pad_transformer(x_fine_co, self.fine_transformer, self.fine_ln)
+        x_f, _H, _W, fine_pt_attn_w = self.apply_pt(
+            x=x_f, transfomer_block=self.f_transformer, norm_layer=self.f_transformer_ln, attn_weights=attn_weights
+        )
 
-        attention_scores["fine_cross_attn_w"] = fine_cross_attn_w
-        attention_scores["fine_pt_attn_w"] = fine_pt_attn_w
+        attn_scores["fine_cross_attn_w"] = fine_cross_attn_w
+        attn_scores["fine_pt_attn_w"] = fine_pt_attn_w
 
         # Source
-        x_source, _H, _W, source_pt_attn_w = self.apply_pad_transformer(x_source, self.source_transformer, self.source_ln)
+        x_s, _H, _W, source_pt_attn_w = self.apply_pt(
+            x=x_s, transfomer_block=self.s_transformer, norm_layer=self.s_transformer_ln, attn_weights=attn_weights
+        )
 
-        attention_scores["source_pt_attn_w"] = source_pt_attn_w
+        attn_scores["source_pt_attn_w"] = source_pt_attn_w
 
         # Conv Processor
-        x = self.conv_processor(x_source, x_fine_co, x_coarse_co, _H, _W)
+        x_fused = self.conv_processor(x_s, x_f, x_c, _H, _W)
 
         # Final Pad-Transformer
-        cls_tokens = repeat(self.cls_token, "() n d -> b n d", b=b).to(x.dtype)
-        x = torch.cat((cls_tokens, x), dim=1)
+        cls_tokens = repeat(self.cls_token, "() n d -> b n d", b=b).to(x_fused.dtype)
+        x_fused = torch.cat((cls_tokens, x_fused), dim=1)
 
-        x, final_attn_w = self.final_transformer(x, _H, _W)
+        x_fused, final_attn_w = self.final_transformer(x_fused, _H, _W, attn_weights=attn_weights)
 
-        attention_scores["final_attn_w"] = final_attn_w
-
-        x = self.final_ln(x)[:, 0]
+        attn_scores["final_attn_w"] = final_attn_w
 
         # MLP Head
 
-        logits = self.mlp_head(x)
+        logits = self.mlp_head(self.final_ln(x_fused)[:, 0])
 
         logits.unsqueeze(0)
 
         hazards = torch.sigmoid(logits)
-        surv = torch.cumprod(1 - hazards, dim=1)
-        surv_y_hat = torch.topk(logits, 1, dim=1)[1]
-        return hazards, surv, surv_y_hat, logits, attention_scores
+        S = torch.cumprod(1 - hazards, dim=1)
+        y_hat = torch.topk(logits, 1, dim=1)[1]
+        return hazards, S, y_hat, logits, attn_scores

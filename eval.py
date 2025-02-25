@@ -195,9 +195,9 @@ if __name__ == "__main__":
     )
 
     cindex_list = np.array(cindex_list)
-    mean_c_i = np.mean(cindex_list)
-    std_c_i = np.std(cindex_list)
+    mean_ci = np.mean(cindex_list)
+    std_ci = np.std(cindex_list)
     print_log_message(
-        f"TCGA-{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model C-Index: {mean_c_i:.3f} +/- {std_c_i:.3f}",
+        f"{args.dataset_name} with {args.backbone} Backbone and {args.model_name} Model C-Index: {mean_ci:.3f} +/- {std_ci:.3f}",
         empty_line=True,
     )

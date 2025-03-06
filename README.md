@@ -1,5 +1,5 @@
 # CrossFusion
-
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 <details>
 <summary>
   <b>CrossFusion: A Multi-Scale Cross-Attention Convolutional Fusion Model for Cancer Survival Prediction</b>
@@ -100,3 +100,7 @@ sh eval.sh
 ```
 
 The list of variables in the `eval.sh` file should closely follow the list in the `train.sh` file.
+
+# License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -29,3 +29,6 @@ venv.bak/
 *.pkl
 runs/
 *.txt
+
+heatmap.py
+heatmap.sh

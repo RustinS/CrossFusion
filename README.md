@@ -29,7 +29,7 @@
 **Abstract:** Cancer survival prediction from whole slide images (WSIs) is a challenging task in computational pathology due to the large size, irregular shape, and high granularity of the WSIs. These characteristics make it difficult to capture the full spectrum of patterns, from subtle cellular abnormalities to complex tissue interactions, which are crucial for accurate prognosis. To address this, we propose CrossFusion—a novel, multi-scale feature integration framework that extracts and fuses information from patches across different magnification levels. By effectively modeling both scale-specific patterns and their interactions, CrossFusion generates a rich feature set that enhances survival prediction accuracy. We validate our approach across six cancer types from public datasets, demonstrating significant improvements over existing state-of-
 the-art methods. Moreover, when coupled with domain-specific feature extraction backbones, our method shows further gains in prognostic performance compared to general-purpose backbones
 
-# Installation
+## Installation
 
 If you wish to install and run the code in this repository, use the provided `environment.yml` file to set up the necessary environment:
 
@@ -69,7 +69,7 @@ As an example, to generate 20x patches from WSIs with a 40x maximum magnificatio
 
 To train the model, please follow these steps using the provided `train.sh` script:
 
-## 1. Set Up Paths
+### 1. Set Up Paths
 
 In the `train.sh` file, update the following variables to match your system's directory structure:
 
@@ -79,11 +79,11 @@ In the `train.sh` file, update the following variables to match your system's di
 
 Other necessary data path configurations reference data stored in the repository's `data` folder. Ensure these paths and filenames correctly reflect your local setup.
 
-## 3. Choose Backbone Model
+### 3. Choose Backbone Model
 
 Specify your desired backbone model used for extracting features with CLAM by setting the appropriate `backbone` name and its dimensions within `train.sh`. We've included examples of backbones we've tested, but you're free to use any compatible backbone.
 
-## 4. Adjust Hyperparameters
+### 4. Adjust Hyperparameters
 
 Review and adjust additional hyperparameters within the `train.sh` file as needed to align with your experimental goals. The hyperparameters in the current version of the `train.sh` file is the one we used for the experiments.
 
@@ -101,6 +101,6 @@ sh eval.sh
 
 The list of variables in the `eval.sh` file should closely follow the list in the `train.sh` file.
 
-# License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

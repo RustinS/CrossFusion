@@ -33,20 +33,20 @@ the-art methods. Moreover, when coupled with domain-specific feature extraction 
 
 If you wish to install and run the code in this repository, use the provided `environment.yml` file to set up the necessary environment:
 
-**1\. Download the repository** (or clone it using git):
+### 1. Clone the repository:
 
 ```shell
 git clone https://github.com/RustinS/CrossFusion.git
 cd CrossFusion
 ```
 
-**2\. Create the Conda environment from the provided file**:
+### 2. Create the Conda environment from the provided file:
 
 ```shell
 conda env create -f environment.yml
 ```
 
-**3\. Activate the newly created environment**:
+### 3. Activate the newly created environment:
 
 ```shell
 conda activate crossfusion

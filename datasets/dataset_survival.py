@@ -28,6 +28,7 @@ class GenericWSISurvivalDataset(Dataset):
         self.train_ids, self.val_ids, self.test_ids = (None, None, None)
         self.data_dir = None
         self.pt_dir = args.pt_dir
+        self.genomic_dir = getattr(args, 'genomic_dir', None)
 
         self.pt_folders = {}
         for mag_level in args.magnifications:
@@ -173,6 +174,7 @@ class GenericWSISurvivalDataset(Dataset):
                 patient_dict=self.patient_dict,
                 num_classes=self.num_classes,
                 pt_folders=self.pt_folders,
+                genomic_dir=self.genomic_dir,
             )
         else:
             split = None
@@ -233,12 +235,23 @@ class GenericMILSurvivalDataset(GenericWSISurvivalDataset):
         else:
             print_error_message(f"File {x5_pt_file_path} does not exist.")
 
+        # Load genomic data if genomic_dir is provided
+        genomic_tensor = None
+        if getattr(self, "genomic_dir", None):
+            # Extract short ID from long ID (first 15 characters)
+            # Example: TCGA-3C-AALI-01Z-00-DX1.F6E9A5DF-D8FB-45CF-B4BD-C6B76294C291 -> TCGA-3C-AALI-01
+            short_id = image_name[:15]
+            genomic_path = os.path.join(self.genomic_dir, f"{short_id}.pt")
+            if os.path.exists(genomic_path):
+                genomic_tensor = torch.load(genomic_path, map_location='cpu', weights_only=False)
+
         return {
             "case_id": case_id,
             "slide_id": slide_id,
             "x20_patches": x20_patches_tensor,
             "x10_patches": x10_patches_tensor,
             "x5_patches": x5_patches_tensor,
+            "genomic": genomic_tensor,
             "label": label,
             "event_time": event_time,
             "censorship": censorship,
@@ -246,13 +259,14 @@ class GenericMILSurvivalDataset(GenericWSISurvivalDataset):
 
 
 class GenericSplit(GenericMILSurvivalDataset):
-    def __init__(self, slide_data, metadata, label_col=None, patient_dict=None, num_classes=2, pt_folders=None):
+    def __init__(self, slide_data, metadata, label_col=None, patient_dict=None, num_classes=2, pt_folders=None, genomic_dir=None):
         self.slide_data = slide_data
         self.metadata = metadata
         self.num_classes = num_classes
         self.label_col = label_col
         self.patient_dict = patient_dict
         self.pt_folders = pt_folders
+        self.genomic_dir = genomic_dir
         self.slide_cls_ids = [[] for i in range(self.num_classes)]
         for i in range(self.num_classes):
             self.slide_cls_ids[i] = np.where(self.slide_data["label"] == i)[0]

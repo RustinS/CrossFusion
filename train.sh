@@ -10,13 +10,14 @@
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/CrossFusion/BLCA"
 
 
-# dataset_name=BRCA
-# clinical_path="./data/tcga_brca_all_clean.csv.zip"
-# csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
-# splits_path="./data/splits/tcga_brca"
-# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/patches_clam"
-# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/features_clam"
-# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/CrossFusion/BRCA"
+dataset_name=BRCA
+clinical_path="./data/tcga_brca_all_clean.csv.zip"
+csv_path="./data/TCGA-Manifests/gdc_manifest_BRCA.csv"
+splits_path="./data/splits/tcga_brca"
+img_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/patches_clam"
+pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/features_clam"
+genomic_dir="/projects/patho5nobackup/TCGA/Survival_Data/BRCA/features_genomic"
+save_dir="/projects/patho5nobackup/TCGA/Trained-Models-Survival/CrossFusion/BRCA"
 
 
 # dataset_name=COAD
@@ -46,13 +47,13 @@
 # save_dir="/projects/patho5nobackup/TCGA/Trained-Models/CrossFusion/LUAD"
 
 
-dataset_name=UCEC
-clinical_path="./data/tcga_ucec_all_clean.csv.zip"
-csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
-splits_path="./data/splits/tcga_ucec"
-img_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/patches_clam"
-pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/features_clam"
-save_dir="/projects/patho5nobackup/TCGA/Trained-Models/CrossFusion/UCEC"
+# dataset_name=UCEC
+# clinical_path="./data/tcga_ucec_all_clean.csv.zip"
+# csv_path="./data/TCGA-Manifests/gdc_manifest_UCEC.csv"
+# splits_path="./data/splits/tcga_ucec"
+# img_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/patches_clam"
+# pt_dir="/projects/patho5nobackup/TCGA/Survival_Data/UCEC/features_clam"
+# save_dir="/projects/patho5nobackup/TCGA/Trained-Models/CrossFusion/UCEC"
 
 
 backbone="resnet50"
@@ -128,6 +129,7 @@ CUDA_VISIBLE_DEVICES=2 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True python t
     --num-heads $num_heads \
     --num-attn-layers $num_attn_layers \
     --pt-dir $pt_dir \
+    --genomic-dir $genomic_dir \
     --backbone $backbone \
     --magnifications $magnifications \
     --lr-decay $lr_decay \

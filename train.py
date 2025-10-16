@@ -167,12 +167,13 @@ def train_single_epoch(model, loader, optimizer, loss_fn, scheduler, grad_accum_
             x20 = batch["x20_patches"].to(device)
             x10 = batch["x10_patches"].to(device)
             x5 = batch["x5_patches"].to(device)
+            genomic = batch["genomic"].to(device) if batch["genomic"] is not None else None
 
             label = batch["label"].long().to(device)
             event_time = batch["event_time"].float()
             censorship = batch["censorship"].to(device)
 
-            hazards, S, _, _, _ = model(x5, x10, x20)
+            hazards, S, _, _, _ = model(x5, x10, x20, genomic=genomic)
             loss = loss_fn(hazards=hazards, S=S, Y=label, c=censorship)
             loss_value = loss.item()
             loss = loss / grad_accum_steps
@@ -222,13 +223,14 @@ def validate_single_epoch(
             x20 = batch["x20_patches"].to(device)
             x10 = batch["x10_patches"].to(device)
             x5 = batch["x5_patches"].to(device)
+            genomic = batch["genomic"].to(device) if batch["genomic"] is not None else None
 
             label = batch["label"].long().to(device)
             event_time = batch["event_time"]
             censorship = batch["censorship"].to(device)
 
             with torch.no_grad():
-                hazards, S, _, _, _ = model(x5, x10, x20)
+                hazards, S, _, _, _ = model(x5, x10, x20, genomic=genomic)
 
                 loss = loss_fn(hazards=hazards.float(), S=S.float(), Y=label, c=censorship, alpha=0)
                 loss_value = loss.item()

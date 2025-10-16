@@ -204,9 +204,25 @@ class Transformer(nn.Module):
 
         self.ppeg = PPEG(dim=dim, class_token=configs["class_token"])
 
-    def forward(self, x, _H=None, _W=None, attn_weights=False):
+    def forward(self, x, _H=None, _W=None, attn_weights=False, num_genomic_tokens=0):
         x, pre_attn_w = self.pre_layers(x, attn_weights=attn_weights)
-        x = self.ppeg(x, _H, _W)
+        
+        # Handle genomic tokens separately for PPEG (which expects spatial 2D structure)
+        if num_genomic_tokens > 0:
+            # Assuming structure: [CLS, genomic_tokens, patch_tokens]
+            cls_and_genomic = x[:, :num_genomic_tokens+1]  # CLS + genomic tokens
+            patch_tokens = x[:, num_genomic_tokens+1:]     # patch tokens only
+            
+            # Apply PPEG only to patch tokens with proper spatial structure
+            # Temporarily add CLS token for PPEG processing
+            patch_with_cls = torch.cat([x[:, 0:1], patch_tokens], dim=1)
+            patch_with_cls = self.ppeg(patch_with_cls, _H, _W)
+            
+            # Recombine: keep original CLS and genomic, use PPEG-processed patches
+            x = torch.cat([patch_with_cls[:, 0:1], cls_and_genomic[:, 1:], patch_with_cls[:, 1:]], dim=1)
+        else:
+            x = self.ppeg(x, _H, _W)
+        
         x, post_attn_w = self.post_layers(x, attn_weights=attn_weights)
         return x, {"pre": pre_attn_w, "post": post_attn_w}
 
@@ -350,6 +366,10 @@ class CrossFusion(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
         nn.init.normal_(self.cls_token, std=1e-6)
 
+        # CLS token for the genomic branch
+        self.gen_cls_token = nn.Parameter(torch.randn(1, 1, self.embed_dim))
+        nn.init.normal_(self.gen_cls_token, std=1e-6)
+
         self.dropout_emb = nn.Dropout(self.dropout_rate)
 
         if self.backbone_dim == self.embed_dim:
@@ -360,6 +380,14 @@ class CrossFusion(nn.Module):
             self.c_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
             self.s_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
             self.f_lin_proj = nn.Sequential(nn.Linear(self.backbone_dim, self.embed_dim), nn.LayerNorm(self.embed_dim))
+
+        # Genomic feature projection (token-wise projection from 768 -> embed_dim)
+        # Expects input shape [B, T, 768] (e.g., T=488). If input is [B, 768], it will be unsqueezed to [B, 1, 768].
+        self.genomic_proj = nn.Sequential(
+            nn.Linear(768, self.embed_dim),
+            nn.LayerNorm(self.embed_dim),
+            nn.Dropout(self.dropout_rate),
+        )
 
         self.f_cross_attn = CrossAttention(
             self.embed_dim,
@@ -408,10 +436,15 @@ class CrossFusion(nn.Module):
         self.final_transformer = Transformer(transformer_configs)
         self.final_ln = nn.LayerNorm(self.embed_dim)
 
+        # A dedicated Transformer and LN for the genomic branch (with class token)
+        self.genomic_transformer = Transformer(transformer_configs)
+        self.gen_final_ln = nn.LayerNorm(self.embed_dim)
+
         self.conv_processor = ConvProcessor(dim=self.embed_dim, dropout_prob=self.dropout_rate)
 
+        # MLP head now consumes concatenated CLS embeddings: [patch_CLS || genomic_CLS]
         self.mlp_head = nn.Sequential(
-            nn.Linear(self.embed_dim, self.n_classes),
+            nn.Linear(self.embed_dim * 2, self.n_classes),
         )
 
         self.apply(init_weight)
@@ -439,7 +472,7 @@ class CrossFusion(nn.Module):
         x = norm_layer(x)
         return x, _H, _W, attn_w
 
-    def forward(self, x5, x10, x20, attn_weights=False):
+    def forward(self, x5, x10, x20, genomic=None, attn_weights=False):
         self.attn_weights = attn_weights
         attn_scores = {}
         b, _, _ = x10.shape
@@ -489,18 +522,41 @@ class CrossFusion(nn.Module):
 
         # Conv Processor
         x_fused = self.conv_processor(x_s, x_f, x_c, _H, _W)
+        # [B, N, embed_dim]
 
-        # Final Pad-Transformer
+        # Final Pad-Transformer for patch tokens (with its own CLS)
         cls_tokens = repeat(self.cls_token, "() n d -> b n d", b=b).to(x_fused.dtype)
         x_fused = torch.cat((cls_tokens, x_fused), dim=1)
-
         x_fused, final_attn_w = self.final_transformer(x_fused, _H, _W, attn_weights=attn_weights)
 
         attn_scores["final_attn_w"] = final_attn_w
 
-        # MLP Head
+        patch_cls_embed = self.final_ln(x_fused)[:, 0]
 
-        logits = self.mlp_head(self.final_ln(x_fused)[:, 0])
+        # Genomic branch: project -> pad to square -> add CLS -> transformer
+        if genomic is not None:
+            # Ensure genomic has shape [B, T, 768]
+            if genomic.dim() == 2:
+                genomic = genomic.unsqueeze(1)  # [B, 1, 768]
+            # Token-wise projection to embed_dim: [B, T, 768] -> [B, T, embed_dim]
+            x_gen = self.genomic_proj(genomic)
+            # Pad to square for spatial-aware transformer
+            x_gen, _Hg, _Wg = square_pad(x_gen)
+            # Add genomic CLS and run through dedicated transformer
+            gen_cls_tokens = repeat(self.gen_cls_token, "() n d -> b n d", b=b).to(x_gen.dtype)
+            x_gen = torch.cat((gen_cls_tokens, x_gen), dim=1)
+            x_gen, gen_final_attn_w = self.genomic_transformer(x_gen, _Hg, _Wg, attn_weights=attn_weights)
+            attn_scores["gen_final_attn_w"] = gen_final_attn_w
+            gen_cls_embed = self.gen_final_ln(x_gen)[:, 0]
+        else:
+            # If no genomic input, use a zero vector to keep MLP input shape consistent
+            gen_cls_embed = torch.zeros_like(patch_cls_embed)
+
+        # Concatenate CLS embeddings from patch and genomic branches
+        fused_cls = torch.cat([patch_cls_embed, gen_cls_embed], dim=-1)
+
+        # MLP Head on concatenated CLS
+        logits = self.mlp_head(fused_cls)
 
         logits.unsqueeze(0)
 
